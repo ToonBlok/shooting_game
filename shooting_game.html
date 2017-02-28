@@ -3,13 +3,89 @@
 	<head>
 		<title>Shooting game</title>
 		<style>
-			// CSS goes here 
+
+			.centeredAttribute {
+			  position: fixed; /* or absolute */
+			  top: 50%;
+			  left: 50%;
+			  margin-top: -350px; /* 50% of canvas height */
+			  margin-left: -600px; /* 50% of canvas width */
+
+			}
+
 		</style>
 	</head>
 	<body>
-		// HTML goes here
+		<canvas id="screen" class="centeredAttribute" width="1200" height="700"></canvas>
+
 		<script>
-			// JS goes here
+			const CANVAS = document.getElementById('screen');
+			const CONTEXT = CANVAS.getContext('2d');
+			//var PLAYER = { x:0, y:0, width: 30, height: 30 };
+
+			document.getElementById("screen").style.backgroundColor = 'black';
+			window.addEventListener('keydown', keyHandler, false);
+
+			function Player(initialX, initialY) {
+				this.width = 30;
+				this.height = 30;
+				this.x = initialX;
+				this.y = initialY - this.height;
+			}
+
+			Player.prototype.getInfo = function() {
+				return "x = " + this.x + ", y = " + this.y;
+			};
+			Player.prototype.draw = function() {
+				CONTEXT.fillStyle = "red";
+				CONTEXT.fillRect(this.x, this.y, this.width, this.height); // w, h
+			};
+
+			var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
+			PLAYER.draw();
+
+			window.onload = function() {
+				init();
+			}
+
+			function init() {
+
+			}
+
+			function keyHandler(event) {
+				removeTail(PLAYER.y, PLAYER.x, PLAYER.width, PLAYER.height);
+				switch (event.keyCode) {
+					case 87: // up
+						PLAYER.y -= 10;
+					break;
+					case 65: // left 
+						PLAYER.x -= 10;
+					break;
+					case 68: // right 
+						PLAYER.x += 10;
+					break;
+					case 83: // down 
+						PLAYER.y += 10;
+					break;
+				}
+				PLAYER.draw();
+			}
+
+			function removeTail(x, y, width, height) {
+				CONTEXT.fillStyle = "black";
+				CONTEXT.fillRect(x, y, width, height); 
+			}
+
+/*
+			function setInitialLocation() {
+				PLAYER.x = CANVAS.width / 2;
+				PLAYER.y = CANVAS.height - PLAYER.height;
+				drawPlayer();
+			}
+			// keypress
+
+			*/
+
 		</script>
 	</body> 
 </html>
