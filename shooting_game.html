@@ -22,57 +22,103 @@
 			const CANVAS = document.getElementById('screen');
 			const CONTEXT = CANVAS.getContext('2d');
 			//var PLAYER = { x:0, y:0, width: 30, height: 30 };
+			var KEYS = {
+				UP: 87,
+				LEFT: 65,
+				RIGHT: 68,
+				DOWN: 83,
+				INFO: 73
 
-			document.getElementById("screen").style.backgroundColor = 'black';
+
+			};
+
+			document.getElementById("screen").style.backgroundColor = 'rgb(51, 171, 210)';
 			window.addEventListener('keydown', keyHandler, false);
 
 			function Player(initialX, initialY) {
-				this.width = 30;
-				this.height = 30;
+				this.image = new Image(); 
+				this.image.src = "resources/jet_sprite.png"
+				this.width = 60;
+				this.height = 60;
 				this.x = initialX;
 				this.y = initialY - this.height;
+			}
+
+			var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
+
+			PLAYER.image.onload = function() {
+				PLAYER.draw();
 			}
 
 			Player.prototype.getInfo = function() {
 				return "x = " + this.x + ", y = " + this.y;
 			};
-			Player.prototype.draw = function() {
-				CONTEXT.fillStyle = "red";
-				CONTEXT.fillRect(this.x, this.y, this.width, this.height); // w, h
-			};
 
-			var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
-			PLAYER.draw();
+			Player.prototype.draw = function() {
+				CONTEXT.drawImage(PLAYER.image, this.x, this.y, this.width, this.height);
+			};
 
 			window.onload = function() {
 				init();
 			}
 
 			function init() {
-
+				
 			}
 
 			function keyHandler(event) {
-				removeTail(PLAYER.y, PLAYER.x, PLAYER.width, PLAYER.height);
+				removeTail(PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height);
 				switch (event.keyCode) {
 					case 87: // up
-						PLAYER.y -= 10;
+						if (checkBounds(PLAYER.x, (PLAYER.y - 10))) {
+							PLAYER.y -= 10;
+						}
 					break;
 					case 65: // left 
-						PLAYER.x -= 10;
+						if (checkBounds((PLAYER.x - 10), PLAYER.y)) {
+							PLAYER.x -= 10;
+						}
 					break;
 					case 68: // right 
-						PLAYER.x += 10;
+						if (checkBounds((PLAYER.x + 10), PLAYER.y)) {
+							PLAYER.x += 10;
+						}
 					break;
 					case 83: // down 
-						PLAYER.y += 10;
+						if (checkBounds(PLAYER.x, (PLAYER.y + 10))) {
+							PLAYER.y += 10;
+						}
+					break;
+					case 73: // info 
+						alert(PLAYER.x + ", " + PLAYER.y);
 					break;
 				}
 				PLAYER.draw();
 			}
 
+			function checkBounds(x, y) {
+				//alert(newMove);
+				//alert(CANVAS.height - PLAYER.height);
+				//alert(PLAYER.y);
+
+
+				if (y > (CANVAS.height - PLAYER.height)) { // prevent down
+					return 0;
+				} else if (x < 0) {
+					return 0;
+				} else if (x > (CANVAS.width - PLAYER.width)) {
+					return 0;
+				} else if (y < 0) {
+					return 0;
+				}
+				
+
+				return 1;
+			}
+
 			function removeTail(x, y, width, height) {
-				CONTEXT.fillStyle = "black";
+				//alert(x + " " + y + " " + width + " " + height);
+				CONTEXT.fillStyle = "rgb(51, 171, 210)";
 				CONTEXT.fillRect(x, y, width, height); 
 			}
 
