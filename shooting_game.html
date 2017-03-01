@@ -62,8 +62,65 @@
 				init();
 			}
 
+			// last: The time since the user navigated to this page
+			var now, dt, last = timestamp();
+
 			function init() {
-				
+				//alert(performance.now());
+				window.requestAnimationFrame(frame);
+			}
+			
+			function frame() {
+				/*
+				   last: The time since the user navigated to this page
+				   now: A animationframe has been requested. Now will become time since this animation was requested.
+				   dt: time between
+				   
+				   last = 54ms
+				   now = first frame request at 85ms
+				   dt = 85 - 54 = 31
+				   result of calculation: time passed between frame updates
+
+			    */
+				now = timestamp();
+				alert(now + " " + last);
+				dt = (now - last) / 1000;
+				last = now;
+				window.requestAnimationFrame(frame);
+
+				// Measure how much time occured since the last animation request
+				//alert(timestamp());
+
+				//setTimeout(loop, 1000);
+				//alert("tick");
+				//alert(PLAYER.width && PLAYER.height);
+
+				// Tell the browser you want to redraw and execute this function
+			}
+
+			 //If your browser supports windows.performance && windows.performance.now, return windows.performance.now(). Else, return new Date().getTime();
+			function timestamp() {
+				return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
+
+			  /*
+				? = then (basically if)
+				: = else
+
+		   	    window.performance is a object.
+			    if (window.performance object && window.performance.now ...) {
+						return window.performance.now();
+				} else {
+					return new Date().getTime();
+				}
+			  */
+			}
+
+			function update() {
+
+			}
+
+			function render() {
+
 			}
 
 			function keyHandler(event) {
