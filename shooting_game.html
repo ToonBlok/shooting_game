@@ -27,11 +27,12 @@
 	</head>
 	<body>
 		<canvas id="screen" class="centeredAttribute" width="1200" height="700"></canvas>
-		<p id="debug">..</p>
+		<p id="framerateCounter">FPS: calculating...</p>
 
 		<script>
 			const CANVAS = document.getElementById('screen');
 			const CONTEXT = CANVAS.getContext('2d');
+			CONTEXT.font = "30px Arial";
 			//var PLAYER = { x:0, y:0, width: 30, height: 30 };
 			var KEYS = {
 				UP: 87,
@@ -39,8 +40,6 @@
 				RIGHT: 68,
 				DOWN: 83,
 				INFO: 73
-
-
 			};
 
 			document.getElementById("screen").style.backgroundColor = 'rgb(51, 171, 210)';
@@ -91,12 +90,22 @@
 			   dt = 85 - 54 = 31
 			   result of calculation: time passed between frame updates
 			*/
+			// 60x a second render() should execute, so 60/1000 = 0.06
+			// every 0.06 seconds, render should execute
+			// timestamp returns a number in milliseconds, like 13213.. 
+			// that number is not useful so you / 1000.
 			function frame() {
 				now = timestamp();
-				dt = Math.min(1, (now - last) / 1000); // Returns the smallest number, either 1 or now / last etc
+				//alert(now);
+				//alert("now = " + now + " and last = " + last);
+
+				//dt = Math.min(1, (now - last) / 1000); // Returns the smallest number, either 1 or now / last etc
+				dt = now - last;
+
 				last = now;
-				render();
-				document.getElementById("debug").innerHTML = "FPS: " + dt;
+				render(dt);
+				//alert(dt);
+				//document.getElementById("framerateCounter").innerHTML = "FPS: " + dt;
 				window.requestAnimationFrame(frame);
 			}
 
@@ -121,12 +130,35 @@
 
 			}
 
-			function render() {
-				PLAYER.draw();
+			var count = 0;
+			var fpscount = 0;
+			var fpsses = 0;
+			function render(dt) {
+				//alert("dt " + dt);
+				count += dt;
+
+				fpscount += dt;
+				if (count >= 0.06) {
+					//alert(count);
+					PLAYER.draw();
+					//alert("Drawing");
+					count = 0;
+					fpsses += 1;
+				}
+				if(fpscount >= 1000) {
+					document.getElementById("framerateCounter").innerHTML = "FPS: " + fpsses;
+
+					//CONTEXT.fillRect(2, 0, 120, 30);
+					CONTEXT.clearRect(2, 0, 120, 30);
+					CONTEXT.fillText("FPS: " + fpsses, 2,25);
+					fpsses = 0;
+					fpscount = 0;
+				}
+				dt = 0;
 			}
 
 			function keyHandler(event) {
-				removeTail(PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height);
+				CONTEXT.clearRect(PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height); 
 				switch (event.keyCode) {
 					case 87: // up
 						if (checkBounds(PLAYER.x, (PLAYER.y - 10))) {
@@ -176,8 +208,7 @@
 
 			function removeTail(x, y, width, height) {
 				//alert(x + " " + y + " " + width + " " + height);
-				CONTEXT.fillStyle = "rgb(51, 171, 210)";
-				CONTEXT.fillRect(x, y, width, height); 
+				CONTEXT.clearRect(x, y, width, height); 
 			}
 
 /*
