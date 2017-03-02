@@ -4,16 +4,16 @@
 		<title>Shooting game</title>
 		<style>
 
-			.centeredAttribute {
+			.centeredElement {
 			  position: fixed; /* or absolute */
 			  top: 50%;
 			  left: 50%;
-			  margin-top: -350px; /* 50% of canvas height */
-			  margin-left: -600px; /* 50% of canvas width */
-
+			  margin-top: -350px; /* got to be 50% of canvas height */
+			  margin-left: -600px; /* got to be 50% of canvas width */
 			}
+
 			p { 
-				font-family: Times new roman;
+				font-family: "Times New Roman";
 				border:1px solid #d3d3d3; 
 				padding-left: 0;
 			   	padding-right: 0;
@@ -26,14 +26,19 @@
 		</style>
 	</head>
 	<body>
-		<canvas id="screen" class="centeredAttribute" width="1200" height="700"></canvas>
-		<p id="framerateCounter">FPS: calculating...</p>
+		<canvas id="screen" class="centeredElement" width="1200" height="700"></canvas>
+		<p id="debug">...</p>
 
 		<script>
 			const CANVAS = document.getElementById('screen');
 			const CONTEXT = CANVAS.getContext('2d');
 			CONTEXT.font = "30px Arial";
-			//var PLAYER = { x:0, y:0, width: 30, height: 30 };
+			var PLAYER;
+			var now, dt, last = timestamp();
+			var count = 0; // needs better name
+			var fpsCount = 0;
+			var totalFrames = 0;
+
 			var KEYS = {
 				UP: 87,
 				LEFT: 65,
@@ -54,12 +59,6 @@
 				this.y = initialY - this.height;
 			}
 
-			var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
-
-			PLAYER.image.onload = function() {
-				PLAYER.draw();
-			}
-
 			Player.prototype.getInfo = function() {
 				return "x = " + this.x + ", y = " + this.y;
 			};
@@ -68,117 +67,79 @@
 				CONTEXT.drawImage(PLAYER.image, this.x, this.y, this.width, this.height);
 			};
 
+			PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
+
 			window.onload = function() {
 				init();
 			}
 
-			// last: The time since the user navigated to this page
-			var now, dt, last = timestamp();
+			PLAYER.image.onload = function() {
+				PLAYER.draw();
+			}
 
 			function init() {
-				//alert(performance.now());
 				window.requestAnimationFrame(frame);
+				CONTEXT.fillText("FPS:", 2, 25);
 			}
 			
-			/*
-			   last: The time since the user navigated to this page
-			   now: A animationframe has been requested. Now will become time since this animation was requested.
-			   dt: time between
-			   
-			   last = 54ms
-			   now = first frame request at 85ms
-			   dt = 85 - 54 = 31
-			   result of calculation: time passed between frame updates
-			*/
-			// 60x a second render() should execute, so 60/1000 = 0.06
-			// every 0.06 seconds, render should execute
-			// timestamp returns a number in milliseconds, like 13213.. 
-			// that number is not useful so you / 1000.
 			function frame() {
 				now = timestamp();
-				//alert(now);
-				//alert("now = " + now + " and last = " + last);
-
-				//dt = Math.min(1, (now - last) / 1000); // Returns the smallest number, either 1 or now / last etc
 				dt = now - last;
-
 				last = now;
+				update(dt);
 				render(dt);
-				//alert(dt);
-				//document.getElementById("framerateCounter").innerHTML = "FPS: " + dt;
 				window.requestAnimationFrame(frame);
 			}
 
-			 //If your browser supports windows.performance && windows.performance.now, return windows.performance.now(). Else, return new Date().getTime();
 			function timestamp() {
 				return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
-
-			  /*
-				? = then (basically if)
-				: = else
-
-		   	    window.performance is a object.
-			    if (window.performance object && window.performance.now ...) {
-						return window.performance.now();
-				} else {
-					return new Date().getTime();
-				}
-			  */
 			}
 
 			function update() {
+				fpsCount += dt;
 
+				if(fpsCount >= 1000) {
+					CONTEXT.clearRect(2, 0, 120, 30);
+					CONTEXT.fillText("FPS: " + totalFrames, 2,25);
+					totalFrames = 0;
+					fpsCount = 0;
+				}
 			}
 
-			var count = 0;
-			var fpscount = 0;
-			var fpsses = 0;
+
 			function render(dt) {
-				//alert("dt " + dt);
 				count += dt;
 
-				fpscount += dt;
 				if (count >= 0.06) {
-					//alert(count);
 					PLAYER.draw();
-					//alert("Drawing");
-					count = 0;
-					fpsses += 1;
-				}
-				if(fpscount >= 1000) {
-					document.getElementById("framerateCounter").innerHTML = "FPS: " + fpsses;
 
-					//CONTEXT.fillRect(2, 0, 120, 30);
-					CONTEXT.clearRect(2, 0, 120, 30);
-					CONTEXT.fillText("FPS: " + fpsses, 2,25);
-					fpsses = 0;
-					fpscount = 0;
+					count = 0;
+					totalFrames += 1;
 				}
+
 				dt = 0;
+
 			}
 
 			function keyHandler(event) {
 				CONTEXT.clearRect(PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height); 
+
 				switch (event.keyCode) {
 					case 87: // up
-						if (checkBounds(PLAYER.x, (PLAYER.y - 10))) {
+						if (checkBounds(PLAYER.x, (PLAYER.y - 10)))
 							PLAYER.y -= 10;
-						}
 					break;
 					case 65: // left 
-						if (checkBounds((PLAYER.x - 10), PLAYER.y)) {
+						if (checkBounds((PLAYER.x - 10), PLAYER.y))
 							PLAYER.x -= 10;
-						}
 					break;
 					case 68: // right 
-						if (checkBounds((PLAYER.x + 10), PLAYER.y)) {
+						if (checkBounds((PLAYER.x + 10), PLAYER.y))
 							PLAYER.x += 10;
-						}
 					break;
 					case 83: // down 
-						if (checkBounds(PLAYER.x, (PLAYER.y + 10))) {
+						if (checkBounds(PLAYER.x, (PLAYER.y + 10)))
 							PLAYER.y += 10;
-						}
 					break;
 					case 73: // info 
 						alert(PLAYER.x + ", " + PLAYER.y);
@@ -187,11 +148,6 @@
 			}
 
 			function checkBounds(x, y) {
-				//alert(newMove);
-				//alert(CANVAS.height - PLAYER.height);
-				//alert(PLAYER.y);
-
-
 				if (y > (CANVAS.height - PLAYER.height)) { // prevent down
 					return 0;
 				} else if (x < 0) {
@@ -200,26 +156,10 @@
 					return 0;
 				} else if (y < 0) {
 					return 0;
+				} else {
+					return 1;
 				}
-				
-
-				return 1;
 			}
-
-			function removeTail(x, y, width, height) {
-				//alert(x + " " + y + " " + width + " " + height);
-				CONTEXT.clearRect(x, y, width, height); 
-			}
-
-/*
-			function setInitialLocation() {
-				PLAYER.x = CANVAS.width / 2;
-				PLAYER.y = CANVAS.height - PLAYER.height;
-				drawPlayer();
-			}
-			// keypress
-
-			*/
 
 		</script>
 	</body> 
