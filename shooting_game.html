@@ -12,11 +12,22 @@
 			  margin-left: -600px; /* 50% of canvas width */
 
 			}
+			p { 
+				font-family: Times new roman;
+				border:1px solid #d3d3d3; 
+				padding-left: 0;
+			   	padding-right: 0;
+			   	margin-left: auto;
+			   	margin-right: auto; 
+				display: block;
+			   	width: 800px;
+			}
 
 		</style>
 	</head>
 	<body>
 		<canvas id="screen" class="centeredAttribute" width="1200" height="700"></canvas>
+		<p id="debug">..</p>
 
 		<script>
 			const CANVAS = document.getElementById('screen');
@@ -70,32 +81,23 @@
 				window.requestAnimationFrame(frame);
 			}
 			
+			/*
+			   last: The time since the user navigated to this page
+			   now: A animationframe has been requested. Now will become time since this animation was requested.
+			   dt: time between
+			   
+			   last = 54ms
+			   now = first frame request at 85ms
+			   dt = 85 - 54 = 31
+			   result of calculation: time passed between frame updates
+			*/
 			function frame() {
-				/*
-				   last: The time since the user navigated to this page
-				   now: A animationframe has been requested. Now will become time since this animation was requested.
-				   dt: time between
-				   
-				   last = 54ms
-				   now = first frame request at 85ms
-				   dt = 85 - 54 = 31
-				   result of calculation: time passed between frame updates
-
-			    */
 				now = timestamp();
-				alert(now + " " + last);
-				dt = (now - last) / 1000;
+				dt = Math.min(1, (now - last) / 1000); // Returns the smallest number, either 1 or now / last etc
 				last = now;
+				render();
+				document.getElementById("debug").innerHTML = "FPS: " + dt;
 				window.requestAnimationFrame(frame);
-
-				// Measure how much time occured since the last animation request
-				//alert(timestamp());
-
-				//setTimeout(loop, 1000);
-				//alert("tick");
-				//alert(PLAYER.width && PLAYER.height);
-
-				// Tell the browser you want to redraw and execute this function
 			}
 
 			 //If your browser supports windows.performance && windows.performance.now, return windows.performance.now(). Else, return new Date().getTime();
@@ -120,7 +122,7 @@
 			}
 
 			function render() {
-
+				PLAYER.draw();
 			}
 
 			function keyHandler(event) {
@@ -150,7 +152,6 @@
 						alert(PLAYER.x + ", " + PLAYER.y);
 					break;
 				}
-				PLAYER.draw();
 			}
 
 			function checkBounds(x, y) {
