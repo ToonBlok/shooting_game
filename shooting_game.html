@@ -1,6 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
+		<meta charset="UTF-8"> 
 		<title>Shooting game</title>
 		<style>
 
@@ -33,7 +34,6 @@
 			const CANVAS = document.getElementById('screen');
 			const CONTEXT = CANVAS.getContext('2d');
 			CONTEXT.font = "30px Arial";
-			var PLAYER;
 			var NOW, DT, LAST = timestamp();
 			var COUNT = 0; // needs better name
 			var FPS_COUNT = 0;
@@ -45,6 +45,7 @@
 				RIGHT: false,
 				DOWN: false
 			};
+			// console.log(); then go to debug in firefox
 
 			document.getElementById("screen").style.backgroundColor = 'rgb(51, 171, 210)';
 
@@ -75,9 +76,15 @@
 					Keys.DOWN = false;
 			}
 
-			function Player(initialX, initialY) {
+			/*
+			   Player has a prototype object from which it inherits stuff
+			   When instantiating from this class, a link is created to the original Player constructor class
+			   Player is a prototype, the PLAYER var below inherits from the prototypeaPlayer has a prototype object from which it inherits stuffPlayer has a prototype object from which it inherits stuff
+
+		    */
+			function Player(initialX, initialY) { // constructor function and class (not object literal) 
 				this.image = new Image(); 
-				this.image.src = "resources/jet_sprite.png"
+				this.image.src = "resources/jet_sprite.png";
 				this.width = 60;
 				this.height = 60;
 				this.x = initialX;
@@ -87,7 +94,7 @@
 
 			function Missile(initialX, initialY) {
 				this.image = new Image(); 
-				this.image.src = "resources/missile.png"
+				this.image.src = "resources/missile.png";
 				this.width = 10;
 				this.height = 23;
 				this.x = initialX;
@@ -96,7 +103,7 @@
 			}
 
 			Missile.prototype.draw = function() {
-				CONTEXT.drawImage(MISSILE.image, this.x, this.y - 60, this.width, this.height);
+				CONTEXT.drawImage(MISSILE.image, this.x, this.y, this.width, this.height);
 			};
 
 			Player.prototype.getInfo = function() {
@@ -107,28 +114,77 @@
 				CONTEXT.drawImage(PLAYER.image, this.x, this.y, this.width, this.height);
 			};
 
+			//let alternateMissileWing = 0;
+			var ROCKET_FIRE_LIMIT_REACHED = 0;
+			var ROCKET_AMMO = 4;
+			let alternateMissileWingCount = 0;
 			Player.prototype.fireMissile = function() {
-				MISSILE.x = PLAYER.x;
-				MISSILE.y = PLAYER.y - 10;
-				CONTEXT.drawImage(MISSILE.image, MISSILE.x, MISSILE.y, MISSILE.width, MISSILE.height);
+
+
+				if (ROCKET_AMMO > 0) {
+					var MISSILE = new Missile((CANVAS.width / 2), CANVAS.height);
+					if (alternateMissileWingCount == 0) {
+						MISSILE.x = PLAYER.x;
+						alternateMissileWingCount = 1;
+					} else if (alternateMissileWingCount == 1) {
+						MISSILE.x = PLAYER.x + 50;
+						alternateMissileWingCount = 0;
+					}
+
+					MISSILE.y = PLAYER.y + 28;
+					MISSILES.push(MISSILE);
+					ROCKET_AMMO -= 1;
+				}
+
+				/* random wing
+				let randomWing = Math.floor(Math.random() * 2);
+				//document.getElementById("debug").innerHTML = randomWing;
+				if(randomWing == 1) {
+					MISSILE.x = PLAYER.x;
+				} else if(randomWing == 0) {
+					MISSILE.x = PLAYER.x + 50;
+				}
+				*/
 			};
 
-			PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
-			MISSILE = new Missile((CANVAS.width / 2), CANVAS.height);
+			//var PLAYER = createEntity("resources/jet_sprite.png", 60, 60, (CANVAS.width / 2), CANVAS.height, 5); 
+			var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
+			var PLAYERTWO = new Player((CANVAS.width / 2), CANVAS.height - 10);
+			var MISSILE = new Missile((CANVAS.width / 2), CANVAS.height);
+			var MISSILES = [];
+			var TILE_WATER = new Image();
+			TILE_WATER.src = "resources/tile_water.png";
 
 			window.onload = function() {
 				init();
 			}
 
+			/*
 			PLAYER.image.onload = function() {
 				PLAYER.draw();
 			}
+			*/
 
 			function init() {
 				window.requestAnimationFrame(frame);
-				CONTEXT.fillText("FPS:", 2, 25);
+				CONTEXT.fillText("fps:", 2, 25);
+				drawTileArray();
 			}
-			
+
+			function drawTileArray() {
+				let maxHorizontalTiles = CANVAS.width / 100;
+				let maxVerticalTiles = CANVAS.height / 100;
+				let maxTiles = maxVerticalTiles * maxHorizontalTiles;
+
+				for (let i = 0; i < maxVerticalTiles; i++) {
+					for (let a = 0; a < maxHorizontalTiles; a++) {
+						CONTEXT.drawImage(TILE_WATER, a * 100, i * 100, 100, 100);
+					}
+				}
+
+			}
+
+
 			function frame() {
 				NOW = timestamp();
 				DT = NOW - LAST;
@@ -143,38 +199,58 @@
 			}
 
 			function update() {
-				document.getElementById("debug").innerHTML = Keys.DOWN + ", " + Keys.LEFT;
 			 	FPS_COUNT += DT;
+				COUNT += DT;
 
-				CONTEXT.clearRect(PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height); 
-				CONTEXT.clearRect(MISSILE.x, MISSILE.y, MISSILE.width, MISSILE.height); 
-				if(FPS_COUNT >= 1000) {
-					CONTEXT.clearRect(2, 0, 120, 30);
-					CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
-					TOTAL_FRAMES = 0;
-					FPS_COUNT = 0;
+				for (let i = 0; i < MISSILES.length; i++) {
+					if (MISSILES[i].y < 0) {
+						MISSILES.splice(i, 1);
+					}
 				}
+
+				if (ROCKET_AMMO == 0) {
+					if (MISSILES.length == 0) {
+						ROCKET_AMMO = 4;
+					}
+				}
+
+				document.getElementById("debug").innerHTML = MISSILES.length;
 
 				move();
 			}
 
+			var TEMP_TOTAL_FRAMERATE = 0;
 			function render(DT) {
-				COUNT += DT;
 
-				if ((COUNT >= 0.06) && (TOTAL_FRAMES != 60)) {
+				if ((COUNT >= 0.06) ) {
+					drawTileArray();
+					CONTEXT.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
+					CONTEXT.fillText("ROCKETS: " + ROCKET_AMMO, 2, CANVAS.height - 4);
+
+					if(FPS_COUNT >= 1000) {
+						CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
+						TEMP_TOTAL_FRAMERATE = TOTAL_FRAMES;
+						TOTAL_FRAMES = 0;
+						FPS_COUNT = 0;
+					}
+
 					PLAYER.draw();
-					MISSILE.draw();
+
+					for (let i = 0; i < MISSILES.length; i++) {
+						MISSILES[i].draw();
+					}
 
 					COUNT = 0;
 					TOTAL_FRAMES += 1;
 				}
-
-				DT = 0;
-
-
 			}
 
+			var lastKnownPlayerPositionX = 0;
+			var lastKnownPlayerPositionY = 0;
 			function move() {
+				lastKnownPlayerPositionX = PLAYER.x;
+				lastKnownPlayerPositionY = PLAYER.y;
+
 				switch (Boolean(Keys)) {
 					case Keys.UP && Keys.LEFT: // Northeast 
 						if ((isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed))) && (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))) {
@@ -217,7 +293,10 @@
 							PLAYER.y += PLAYER.speed;
 					break;
 				}
-				MISSILE.y -= 10;
+
+				for (let i = 0; i < MISSILES.length; i++) {
+					MISSILES[i].y -= 10;
+				}
 			}
 
 			function isInsideBounds(x, y) {
