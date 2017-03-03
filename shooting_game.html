@@ -34,21 +34,44 @@
 			const CONTEXT = CANVAS.getContext('2d');
 			CONTEXT.font = "30px Arial";
 			var PLAYER;
-			var now, dt, last = timestamp();
-			var count = 0; // needs better name
-			var fpsCount = 0;
-			var totalFrames = 0;
+			var NOW, DT, LAST = timestamp();
+			var COUNT = 0; // needs better name
+			var FPS_COUNT = 0;
+			var TOTAL_FRAMES = 0;
 
-			var KEYS = {
-				UP: 87,
-				LEFT: 65,
-				RIGHT: 68,
-				DOWN: 83,
-				INFO: 73
+			var Keys = {
+				UP: false,
+				LEFT: false,
+				RIGHT: false,
+				DOWN: false
 			};
 
 			document.getElementById("screen").style.backgroundColor = 'rgb(51, 171, 210)';
-			window.addEventListener('keydown', keyHandler, false);
+
+			window.onkeydown = function(e) {
+				//e.preventDefault(); // Prevent the default action of keydown
+
+				if (e.keyCode == 87)
+					Keys.UP = true;
+				else if (e.keyCode == 65)
+					Keys.LEFT = true;
+				else if (e.keyCode == 68)
+					Keys.RIGHT = true;
+				else if (e.keyCode == 83)
+					Keys.DOWN = true;
+			}
+			window.onkeyup = function(e) {
+				//e.preventDefault();
+
+				if (e.keyCode == 87)
+					Keys.UP = false;
+				else if (e.keyCode == 65)
+					Keys.LEFT = false;
+				else if (e.keyCode == 68)
+					Keys.RIGHT = false;
+				else if (e.keyCode == 83)
+					Keys.DOWN = false;
+			}
 
 			function Player(initialX, initialY) {
 				this.image = new Image(); 
@@ -57,6 +80,7 @@
 				this.height = 60;
 				this.x = initialX;
 				this.y = initialY - this.height;
+				this.speed = 5;
 			}
 
 			Player.prototype.getInfo = function() {
@@ -83,11 +107,11 @@
 			}
 			
 			function frame() {
-				now = timestamp();
-				dt = now - last;
-				last = now;
-				update(dt);
-				render(dt);
+				NOW = timestamp();
+				DT = NOW - LAST;
+				LAST = NOW;
+				update(DT);
+				render(DT);
 				window.requestAnimationFrame(frame);
 			}
 
@@ -96,58 +120,80 @@
 			}
 
 			function update() {
-				fpsCount += dt;
+				document.getElementById("debug").innerHTML = Keys.DOWN + ", " + Keys.LEFT;
+			 	FPS_COUNT += DT;
 
-				if(fpsCount >= 1000) {
+				CONTEXT.clearRect(PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height); 
+				if(FPS_COUNT >= 1000) {
 					CONTEXT.clearRect(2, 0, 120, 30);
-					CONTEXT.fillText("FPS: " + totalFrames, 2,25);
-					totalFrames = 0;
-					fpsCount = 0;
+					CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
+					TOTAL_FRAMES = 0;
+					FPS_COUNT = 0;
 				}
+
+				move();
 			}
 
+			function render(DT) {
+				COUNT += DT;
 
-			function render(dt) {
-				count += dt;
-
-				if (count >= 0.06) {
+				if ((COUNT >= 0.06) && (TOTAL_FRAMES != 60)) {
 					PLAYER.draw();
 
-					count = 0;
-					totalFrames += 1;
+					COUNT = 0;
+					TOTAL_FRAMES += 1;
 				}
 
-				dt = 0;
+				DT = 0;
 
 			}
 
-			function keyHandler(event) {
-				CONTEXT.clearRect(PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height); 
-
-				switch (event.keyCode) {
-					case 87: // up
-						if (checkBounds(PLAYER.x, (PLAYER.y - 10)))
-							PLAYER.y -= 10;
+			function move() {
+				switch (Boolean(Keys)) {
+					case Keys.UP && Keys.LEFT: // Northeast 
+						if ((isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed))) && (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))) {
+							PLAYER.y -= PLAYER.speed;
+							PLAYER.x -= PLAYER.speed;
+						}
 					break;
-					case 65: // left 
-						if (checkBounds((PLAYER.x - 10), PLAYER.y))
-							PLAYER.x -= 10;
+					case Keys.UP && Keys.RIGHT: // Northwest
+						if ((isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed))) && (isInsideBounds((PLAYER.x + PLAYER.speed), PLAYER.y))) {
+							PLAYER.y -= PLAYER.speed;
+							PLAYER.x += PLAYER.speed;
+						}
 					break;
-					case 68: // right 
-						if (checkBounds((PLAYER.x + 10), PLAYER.y))
-							PLAYER.x += 10;
+					case Keys.DOWN && Keys.LEFT: // Southeast 
+						if ((isInsideBounds(PLAYER.x, (PLAYER.y + PLAYER.speed))) && (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))) { 
+							PLAYER.y += PLAYER.speed;
+							PLAYER.x -= PLAYER.speed;
+						}
 					break;
-					case 83: // down 
-						if (checkBounds(PLAYER.x, (PLAYER.y + 10)))
-							PLAYER.y += 10;
+					case Keys.DOWN && Keys.RIGHT: // Southwest 
+						if ((isInsideBounds(PLAYER.x, (PLAYER.y + PLAYER.speed))) && (isInsideBounds((PLAYER.x + PLAYER.speed), PLAYER.y))) { 
+							PLAYER.y += PLAYER.speed;
+							PLAYER.x += PLAYER.speed;
+						}
 					break;
-					case 73: // info 
-						alert(PLAYER.x + ", " + PLAYER.y);
+					case Keys.UP: // North 
+						if (isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed)))
+							PLAYER.y -= PLAYER.speed;
+					break;
+					case Keys.LEFT: // East 
+						if (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))
+							PLAYER.x -= PLAYER.speed;
+					break;
+					case Keys.RIGHT: // West 
+						if (isInsideBounds((PLAYER.x + PLAYER.speed), PLAYER.y))
+							PLAYER.x += PLAYER.speed;
+					break;
+					case Keys.DOWN: // South 
+						if (isInsideBounds(PLAYER.x, (PLAYER.y + PLAYER.speed)))
+							PLAYER.y += PLAYER.speed;
 					break;
 				}
 			}
 
-			function checkBounds(x, y) {
+			function isInsideBounds(x, y) {
 				if (y > (CANVAS.height - PLAYER.height)) { // prevent down
 					return 0;
 				} else if (x < 0) {
