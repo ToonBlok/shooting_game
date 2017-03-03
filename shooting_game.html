@@ -59,6 +59,8 @@
 					Keys.RIGHT = true;
 				else if (e.keyCode == 83)
 					Keys.DOWN = true;
+				else if (e.keyCode == 32) // space
+					PLAYER.fireMissile();
 			}
 			window.onkeyup = function(e) {
 				//e.preventDefault();
@@ -83,6 +85,20 @@
 				this.speed = 5;
 			}
 
+			function Missile(initialX, initialY) {
+				this.image = new Image(); 
+				this.image.src = "resources/missile.png"
+				this.width = 10;
+				this.height = 23;
+				this.x = initialX;
+				this.y = initialY - this.height;
+				this.speed = 5;
+			}
+
+			Missile.prototype.draw = function() {
+				CONTEXT.drawImage(MISSILE.image, this.x, this.y - 60, this.width, this.height);
+			};
+
 			Player.prototype.getInfo = function() {
 				return "x = " + this.x + ", y = " + this.y;
 			};
@@ -91,7 +107,14 @@
 				CONTEXT.drawImage(PLAYER.image, this.x, this.y, this.width, this.height);
 			};
 
+			Player.prototype.fireMissile = function() {
+				MISSILE.x = PLAYER.x;
+				MISSILE.y = PLAYER.y - 10;
+				CONTEXT.drawImage(MISSILE.image, MISSILE.x, MISSILE.y, MISSILE.width, MISSILE.height);
+			};
+
 			PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
+			MISSILE = new Missile((CANVAS.width / 2), CANVAS.height);
 
 			window.onload = function() {
 				init();
@@ -124,6 +147,7 @@
 			 	FPS_COUNT += DT;
 
 				CONTEXT.clearRect(PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height); 
+				CONTEXT.clearRect(MISSILE.x, MISSILE.y, MISSILE.width, MISSILE.height); 
 				if(FPS_COUNT >= 1000) {
 					CONTEXT.clearRect(2, 0, 120, 30);
 					CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
@@ -139,12 +163,14 @@
 
 				if ((COUNT >= 0.06) && (TOTAL_FRAMES != 60)) {
 					PLAYER.draw();
+					MISSILE.draw();
 
 					COUNT = 0;
 					TOTAL_FRAMES += 1;
 				}
 
 				DT = 0;
+
 
 			}
 
@@ -191,6 +217,7 @@
 							PLAYER.y += PLAYER.speed;
 					break;
 				}
+				MISSILE.y -= 10;
 			}
 
 			function isInsideBounds(x, y) {
