@@ -53,6 +53,7 @@
 			window.onkeydown = function(e) {
 				//e.preventDefault(); // Prevent the default action of keydown
 
+				console.log(e.keyCode);
 				if (e.keyCode == 87)
 					Keys.UP = true;
 				else if (e.keyCode == 65)
@@ -63,6 +64,8 @@
 					Keys.DOWN = true;
 				else if (e.keyCode == 32) // space
 					PLAYER.fireMissile();
+				else if (e.keyCode == 73) // i 
+					alert("Player.x = " + PLAYER.x + ", Player.Y = " + PLAYER.y);
 			}
 			window.onkeyup = function(e) {
 				//e.preventDefault();
@@ -192,39 +195,72 @@
 				return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 			}
 
+    		var explosion = {
+	 			x: 0,
+	 			y: 0
+			};
+
 			function update(dt) {
 				GLOBAL_TIMER += dt;
 			 	FPS_COUNT += dt;
 				COUNT += dt;
 
 				for (let i = 0; i < MISSILES.length; i++) {
-					/*
 					for (let a = 0; a < ENEMY_JETS.length; a++) {
-							document.getElementById("debug").innerHTML = MISSILES[i].y + ", " + ENEMY_JETS[a].y ;
-							alert(MISSILES[i].y + ", " + ENEMY_JETS[a].y);
-						if (collision(MISSILES[i].x, MISSILES[i].y, ENEMY_JETS[a].x, ENEMY_JETS[a].y, ENEMY_JETS[a].width, ENEMY_JETS[a].height)) {
-							alert("BOOM");
+						/*
+						document.getElementById("debug").innerHTML = MISSILES[i].y + ", " + ENEMY_JETS[a].y ;
+						alert(MISSILES[i].y + ", " + ENEMY_JETS[a].y);
+						*/
+						if (collision(MISSILES[i].x, MISSILES[i].y, ENEMY_JETS[a].x, ENEMY_JETS[a].y, MISSILES[i].width, MISSILES[i].height, ENEMY_JETS[a].width, ENEMY_JETS[a].height)) {
+							explosion.x = ENEMY_JETS[a].x;
+							explosion.y = ENEMY_JETS[a].y;
+							ENEMY_JETS.splice(a, 1);
+							//alert("BOOM");
 						}
 					}
-					*/
 					if (MISSILES[i].y < 0) {
 						MISSILES.splice(i, 1);
 					}
 				}
 
 				if (ROCKET_AMMO == 0) {
-					if (MISSILES.length == 0) {
-						ROCKET_AMMO = 4;
-					}
+					reload();
 				}
 
 				updateEnemies(dt);
 				move();
 			}
+			
 
-			function collision (missileX, missileY, enemyX, enemyY, width, height) {
-				alert("x: " + x + " and x + width = " + (x + width)); 
-				alert("y: " + y + " and y + height= " + (y + height)); 
+			var TIMER_RELOAD = 0;
+			var TIMER_STARTING_TIME = 0;
+			var RELOADING = 0;
+			var RELOAD_DURATION = 2000;
+			function reload() {
+				if (!Boolean(RELOADING)) {
+					TIMER_STARTING_TIME = GLOBAL_TIMER;
+					//console.log("STARTED: " + TIMER_STARTING_TIME);
+					RELOADING = 1;
+				}
+				//console.log("if " + GLOBAL_TIMER + " > " + (TIMER_STARTING_TIME + 4000));
+				//alert("triggered");
+				if (GLOBAL_TIMER > (TIMER_STARTING_TIME + RELOAD_DURATION)) {
+					ROCKET_AMMO = 4;
+					TIMER_STARTING_TIME = 0;
+					RELOADING = 0;
+				}
+			}
+			
+			function collision (missileX, missileY, enemyX, enemyY, missileWidth, missileHeight, enemyWidth, enemyHeight) {
+				enemyWidth += 5;
+				if ((missileX >= enemyX) && 
+			       ((missileX + missileWidth) < (enemyX + enemyWidth)) &&
+     			   (missileY <= (enemyY + enemyHeight)) &&
+				   (missileY >= enemyY)) {
+					return true;
+				} else {
+					return false;
+				}
 			}
 
 			function updateEnemies (dt) {
@@ -241,9 +277,16 @@
 				}
 			}
 
+			var EXPLOSION = new Image();
+			EXPLOSION.src = "resources/sprite_explosion.png";
 			var TEMP_TOTAL_FRAMERATE = 0;
 			function render(dt) {
 				if ((COUNT >= 0.06) ) {
+					if (explosion.y != 0) {
+						alert("explosion requested at" + explosion.x + ", " + explosion.y);
+						//CONTEXT.drawImage(EXPLOSION.image, explosion.x, explosion.y, 20, 20);
+
+					}
 					drawTileArray();
 					CONTEXT.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
 					if (ROCKET_AMMO != 0) {
@@ -269,6 +312,7 @@
 					}
 
 					COUNT = 0;
+
 					TOTAL_FRAMES += 1;
 				}
 				CONTEXT.fillText(Math.round(GLOBAL_TIMER), 1100, 25);
