@@ -34,10 +34,11 @@
 			const CANVAS = document.getElementById('screen');
 			const CONTEXT = CANVAS.getContext('2d');
 			CONTEXT.font = "30px Arial";
-			var NOW, DT, LAST = timestamp();
+			var NOW, LAST = timestamp();
 			var COUNT = 0; // needs better name
 			var FPS_COUNT = 0;
 			var TOTAL_FRAMES = 0;
+			var GLOBAL_TIMER = 0;
 
 			var Keys = {
 				UP: false,
@@ -84,7 +85,7 @@
 		    */
 			function Player(initialX, initialY) { // constructor function and class (not object literal) 
 				this.image = new Image(); 
-				this.image.src = "resources/jet_sprite.png";
+				this.image.src = "resources/jet_player_sprite.png";
 				this.width = 60;
 				this.height = 60;
 				this.x = initialX;
@@ -102,20 +103,32 @@
 				this.speed = 5;
 			}
 
+			function EnemyJet(initialX, initialY) {
+				this.image = new Image(); 
+				this.image.src = "resources/jet_enemy_sprite.png";
+				this.width = 60;
+				this.height = 60;
+				this.x = initialX;
+				this.y = initialY - this.height;
+				this.speed = 2;
+			}
+
 			Missile.prototype.draw = function() {
-				CONTEXT.drawImage(MISSILE.image, this.x, this.y, this.width, this.height);
+				CONTEXT.drawImage(this.image, this.x, this.y, this.width, this.height);
+			};
+
+			EnemyJet.prototype.draw = function() {
+				CONTEXT.drawImage(this.image, this.x, this.y, this.width, this.height);
+			};
+
+			Player.prototype.draw = function() {
+				CONTEXT.drawImage(this.image, this.x, this.y, this.width, this.height);
 			};
 
 			Player.prototype.getInfo = function() {
 				return "x = " + this.x + ", y = " + this.y;
 			};
 
-			Player.prototype.draw = function() {
-				CONTEXT.drawImage(PLAYER.image, this.x, this.y, this.width, this.height);
-			};
-
-			//let alternateMissileWing = 0;
-			var ROCKET_FIRE_LIMIT_REACHED = 0;
 			var ROCKET_AMMO = 4;
 			let alternateMissileWingCount = 0;
 			Player.prototype.fireMissile = function() {
@@ -135,35 +148,17 @@
 					MISSILES.push(MISSILE);
 					ROCKET_AMMO -= 1;
 				}
-
-				/* random wing
-				let randomWing = Math.floor(Math.random() * 2);
-				//document.getElementById("debug").innerHTML = randomWing;
-				if(randomWing == 1) {
-					MISSILE.x = PLAYER.x;
-				} else if(randomWing == 0) {
-					MISSILE.x = PLAYER.x + 50;
-				}
-				*/
 			};
 
-			//var PLAYER = createEntity("resources/jet_sprite.png", 60, 60, (CANVAS.width / 2), CANVAS.height, 5); 
 			var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
-			var PLAYERTWO = new Player((CANVAS.width / 2), CANVAS.height - 10);
-			var MISSILE = new Missile((CANVAS.width / 2), CANVAS.height);
 			var MISSILES = [];
+			var ENEMY_JETS = [];
 			var TILE_WATER = new Image();
 			TILE_WATER.src = "resources/tile_water.png";
 
 			window.onload = function() {
 				init();
 			}
-
-			/*
-			PLAYER.image.onload = function() {
-				PLAYER.draw();
-			}
-			*/
 
 			function init() {
 				window.requestAnimationFrame(frame);
@@ -184,13 +179,12 @@
 
 			}
 
-
 			function frame() {
 				NOW = timestamp();
-				DT = NOW - LAST;
+				var dt  = NOW - LAST;
 				LAST = NOW;
-				update(DT);
-				render(DT);
+				update(dt);
+				render(dt);
 				window.requestAnimationFrame(frame);
 			}
 
@@ -198,11 +192,21 @@
 				return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
 			}
 
-			function update() {
-			 	FPS_COUNT += DT;
-				COUNT += DT;
+			function update(dt) {
+				GLOBAL_TIMER += dt;
+			 	FPS_COUNT += dt;
+				COUNT += dt;
 
 				for (let i = 0; i < MISSILES.length; i++) {
+					/*
+					for (let a = 0; a < ENEMY_JETS.length; a++) {
+							document.getElementById("debug").innerHTML = MISSILES[i].y + ", " + ENEMY_JETS[a].y ;
+							alert(MISSILES[i].y + ", " + ENEMY_JETS[a].y);
+						if (collision(MISSILES[i].x, MISSILES[i].y, ENEMY_JETS[a].x, ENEMY_JETS[a].y, ENEMY_JETS[a].width, ENEMY_JETS[a].height)) {
+							alert("BOOM");
+						}
+					}
+					*/
 					if (MISSILES[i].y < 0) {
 						MISSILES.splice(i, 1);
 					}
@@ -214,18 +218,39 @@
 					}
 				}
 
-				document.getElementById("debug").innerHTML = MISSILES.length;
-
+				updateEnemies(dt);
 				move();
 			}
 
-			var TEMP_TOTAL_FRAMERATE = 0;
-			function render(DT) {
+			function collision (missileX, missileY, enemyX, enemyY, width, height) {
+				alert("x: " + x + " and x + width = " + (x + width)); 
+				alert("y: " + y + " and y + height= " + (y + height)); 
+			}
 
+			function updateEnemies (dt) {
+				if (ENEMY_JETS.length != 0) {
+					for (let i = 0; i < ENEMY_JETS.length; i++) {
+						ENEMY_JETS[i].y += ENEMY_JETS[i].speed;
+					}
+				}
+				if ((GLOBAL_TIMER > 1000) && (ENEMY_JETS.length == 0)) {
+					var enemy_jet = new EnemyJet((CANVAS.width / 2), CANVAS.height);
+					enemy_jet.x = 600;
+					enemy_jet.y = -100;
+					ENEMY_JETS.push(enemy_jet);
+				}
+			}
+
+			var TEMP_TOTAL_FRAMERATE = 0;
+			function render(dt) {
 				if ((COUNT >= 0.06) ) {
 					drawTileArray();
 					CONTEXT.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
-					CONTEXT.fillText("ROCKETS: " + ROCKET_AMMO, 2, CANVAS.height - 4);
+					if (ROCKET_AMMO != 0) {
+						CONTEXT.fillText("ROCKETS: " + ROCKET_AMMO, 2, CANVAS.height - 4);
+					} else {
+						CONTEXT.fillText("ROCKETS: reloading", 2, CANVAS.height - 4);
+					}
 
 					if(FPS_COUNT >= 1000) {
 						CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
@@ -239,10 +264,17 @@
 					for (let i = 0; i < MISSILES.length; i++) {
 						MISSILES[i].draw();
 					}
+					for (let i = 0; i < ENEMY_JETS.length; i++) {
+						ENEMY_JETS[i].draw();
+					}
 
 					COUNT = 0;
 					TOTAL_FRAMES += 1;
 				}
+				CONTEXT.fillText(Math.round(GLOBAL_TIMER), 1100, 25);
+			 // document.getElementById("debug").innerHTML = Math.round(GLOBAL_TIMER);
+
+
 			}
 
 			var lastKnownPlayerPositionX = 0;
