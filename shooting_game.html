@@ -55,7 +55,7 @@
 				//e.preventDefault(); // Prevent the default action of keydown
 
 				if (Boolean(PLAYER.alive)) {
-					console.log(e.keyCode);
+					//console.log(e.keyCode);
 					if (e.keyCode == 87)
 						Keys.UP = true;
 					else if (e.keyCode == 65)
@@ -109,8 +109,7 @@
 				this.height = 23;
 				this.x = initialX;
 				this.y = initialY - this.height;
-				this.speed = 5;
-				this.detonated = 0;
+				this.speed = 10;
 			}
 
 			function EnemyJet(initialX, initialY) {
@@ -120,17 +119,20 @@
 				this.height = 60;
 				this.x = initialX;
 				this.y = initialY - this.height;
-				this.speed = 2;
+				this.speed = 3;
 			}
 
 			function Explosion(initialX, initialY) {
 				this.image = new Image(); 
 				this.image.src = "resources/sprite_explosion.png";
+				//this.image.src = "resources/sprite_all_explosions.png";
 				this.width = 60;
 				this.height = 60;
 				this.x = initialX;
 				this.y = initialY - this.height;
 				this.startTime = 0;
+				this.horizontalSprites = 5;
+				this.verticalSprites = 5;
 			}
 
 			Missile.prototype.draw = function() {
@@ -146,7 +148,10 @@
 			};
 
 			Explosion.prototype.draw = function() {
+				// normal version
 				CONTEXT.drawImage(this.image, this.x, this.y, this.width, this.height);
+				// animated version
+				//CONTEXT.drawImage(this.image, this.x, this.y, this.width, this.height, 0, 0, 30, 30 );
 			};
 
 			Player.prototype.getInfo = function() {
@@ -193,13 +198,14 @@
 			}
 
 			function drawTileArray() {
-				let maxHorizontalTiles = CANVAS.width / 100;
-				let maxVerticalTiles = CANVAS.height / 100;
+				let tileSize = 50;
+				let maxHorizontalTiles = CANVAS.width / tileSize;
+				let maxVerticalTiles = CANVAS.height / tileSize;
 				let maxTiles = maxVerticalTiles * maxHorizontalTiles;
 
 				for (let i = 0; i < maxVerticalTiles; i++) {
 					for (let a = 0; a < maxHorizontalTiles; a++) {
-						CONTEXT.drawImage(TILE_WATER, a * 100, i * 100, 100, 100);
+						CONTEXT.drawImage(TILE_WATER, a * tileSize, i * tileSize, tileSize, tileSize);
 					}
 				}
 
@@ -223,6 +229,7 @@
 			 	FPS_COUNT += dt;
 				COUNT += dt;
 
+				document.getElementById("debug").innerHTML = "Missiles: " + MISSILES.length + " and enemies " + ENEMY_JETS.length;
 				for (let i = 0; i < MISSILES.length; i++) {
 					for (let a = 0; a < ENEMY_JETS.length; a++) {
 						/*
@@ -235,11 +242,10 @@
 							explosion.y = ENEMY_JETS[a].y;
 							explosion.startTime = GLOBAL_TIMER;
 	 						EXPLOSIONS.push(explosion);
-							MISSILES[i].detonated = 1;
 
 							MISSILES.splice(i, 1);
 							ENEMY_JETS.splice(a, 1);
-							//alert("BOOM");
+							break;
 						}
 					}
 				}
@@ -247,6 +253,12 @@
 				for (let i = 0; i < MISSILES.length; i++) {
 					if (MISSILES[i].y < 0) {
 						MISSILES.splice(i, 1);
+					}
+				}
+
+				for (let i = 0; i < ENEMY_JETS.length; i++) {
+					if (ENEMY_JETS[i].y > CANVAS.height) {
+						ENEMY_JETS.splice(i, 1);
 					}
 				}
 
@@ -329,17 +341,23 @@
 			}
 			
 
+			var enemySpawnInterval = 2000;
 			function updateEnemies (dt) {
 				if (ENEMY_JETS.length != 0) {
 					for (let i = 0; i < ENEMY_JETS.length; i++) {
 						ENEMY_JETS[i].y += ENEMY_JETS[i].speed;
 					}
 				}
-				if ((GLOBAL_TIMER > 1000) && (ENEMY_JETS.length == 0)) {
+				// Uncomment to get more jets
+				//if ((GLOBAL_TIMER > enemySpawnInterval) && ENEMY_JETS.length == 0) {
+				if ((GLOBAL_TIMER > enemySpawnInterval)) {
 					var enemy_jet = new EnemyJet((CANVAS.width / 2), CANVAS.height);
-					enemy_jet.x = 600;
+					var randomSpawnX = Math.floor(Math.random() * (CANVAS.width / 100));
+					enemy_jet.x = randomSpawnX * 100;
 					enemy_jet.y = -100;
 					ENEMY_JETS.push(enemy_jet);
+					// Uncomment to get more jets
+					enemySpawnInterval += 2000;
 				}
 			}
 
@@ -386,39 +404,27 @@
 					COUNT = 0;
 
 					if (!Boolean(PLAYER.alive)) {
-						let menuSizeX = 500;
-						let menuSizeY = 300;
-						let menuPosX = ((CANVAS.width / 2) - (menuSizeX / 2));
-						let menuPosY = ((CANVAS.height / 2) - (menuSizeY / 2));
-						CONTEXT.beginPath();
-						CONTEXT.moveTo(menuPosX, menuPosY);
-						CONTEXT.lineTo(menuPosX, menuPosY + menuSizeY);
-						CONTEXT.moveTo(menuPosX, menuPosY + menuSizeY);
-						CONTEXT.lineTo(menuPosX + menuSizeX, menuPosY + menuSizeY);
-						CONTEXT.moveTo(menuPosX + menuSizeX, menuPosY + menuSizeY);
-						CONTEXT.lineTo(menuPosX + menuSizeX, menuPosY);
-						CONTEXT.moveTo(menuPosX + menuSizeX, menuPosY);
-						CONTEXT.lineTo(menuPosX, menuPosY);
-						CONTEXT.stroke();
-
-						CONTEXT.font = "123px Arial";
-						CONTEXT.fillText("You died", menuPosX + 10, menuPosY + (menuSizeY / 2) + 35);
-						CONTEXT.font = "30px Arial";
-						
-
-						/*
-						CONTEXT.fillRect(menuPosX, menuPosY, menuSizeX, menuSizeY);
-						CONTEXT.clearRect(menuPosX + 5, menuPosY - 1, menuSizeX - 5, menuSizeY - 5);
-						*/
-						// size from left
+						drawMenu();
 					}
 
 					TOTAL_FRAMES += 1;
 				}
 				CONTEXT.fillText(Math.round(GLOBAL_TIMER), 1100, 25);
 			 // document.getElementById("debug").innerHTML = Math.round(GLOBAL_TIMER);
+			}
+			
+			function drawMenu() {
+				let menuSizeX = 500;
+				let menuSizeY = 300;
+				let menuPosX = ((CANVAS.width / 2) - (menuSizeX / 2));
+				let menuPosY = ((CANVAS.height / 2) - (menuSizeY / 2));
+				CONTEXT.strokeStyle = "white";
+				CONTEXT.strokeRect(menuPosX, menuPosY, menuSizeX, menuSizeY);
+				CONTEXT.stroke();
 
-
+				CONTEXT.font = "123px Arial";
+				CONTEXT.fillText("You died", menuPosX + 10, menuPosY + (menuSizeY / 2) + 35);
+				CONTEXT.font = "30px Arial";
 			}
 
 			var lastKnownPlayerPositionX = 0;
