@@ -35,90 +35,60 @@
 			const CONTEXT = CANVAS.getContext('2d');
 			CONTEXT.font = "30px Arial";
 			CONTEXT.fillStyle = "white";
+
+			var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
+			var TILE_WATER = new Image();
+			TILE_WATER.src = "resources/tile_water.png";
+			let ALTERNATE_MISSILE_WING = 0;
+
+			var MISSILES = [];
+			var ENEMY_JETS = [];
+			var EXPLOSIONS = [];
+
 			var NOW, LAST = timestamp();
 			var COUNT = 0; // needs better name
 			var FPS_COUNT = 0;
 			var TOTAL_FRAMES = 0;
 			var GLOBAL_TIMER = 0;
+			var TIMER_RELOAD = 0;
+			var TIMER_STARTING_TIME = 0;
+			var RELOADING = 0;
+			var RELOAD_DURATION = 2000;
+			var enemySpawnInterval = 2000;
+			var TEMP_TOTAL_FRAMERATE = 0;
 
-			var Keys = {
-				UP: false,
-				LEFT: false,
-				RIGHT: false,
-				DOWN: false
-			};
-			// console.log(); then go to debug in firefox
-
-			document.getElementById("screen").style.backgroundColor = 'rgb(51, 171, 210)';
-
-			window.onkeydown = function(e) {
-				//e.preventDefault(); // Prevent the default action of keydown
-
-				if (Boolean(PLAYER.alive)) {
-					//console.log(e.keyCode);
-					if (e.keyCode == 87)
-						Keys.UP = true;
-					else if (e.keyCode == 65)
-						Keys.LEFT = true;
-					else if (e.keyCode == 68)
-						Keys.RIGHT = true;
-					else if (e.keyCode == 83)
-						Keys.DOWN = true;
-					else if (e.keyCode == 32) // space
-						PLAYER.fireMissile();
-					else if (e.keyCode == 73) // i 
-						alert("Player.x = " + PLAYER.x + ", Player.Y = " + PLAYER.y);
-				}
-			}
-			window.onkeyup = function(e) {
-				//e.preventDefault();
-				if (Boolean(PLAYER.alive)) {
-					if (e.keyCode == 87)
-						Keys.UP = false;
-					else if (e.keyCode == 65)
-						Keys.LEFT = false;
-					else if (e.keyCode == 68)
-						Keys.RIGHT = false;
-					else if (e.keyCode == 83)
-						Keys.DOWN = false;
-				}
-			}
-
-			/*
-			   Player has a prototype object from which it inherits stuff
-			   When instantiating from this class, a link is created to the original Player constructor class
-			   Player is a prototype, the PLAYER var below inherits from the prototypeaPlayer has a prototype object from which it inherits stuffPlayer has a prototype object from which it inherits stuff
-
-		    */
-			function Player(initialX, initialY) { // constructor function and class (not object literal) 
+			// ## Classes ##
+			// these are constructor functions and classes (not object literals) 
+			function Player(initialX, initialY) { 
 				this.image = new Image(); 
 				this.image.src = "resources/sprite_jet_player.png";
-				this.width = 60;
-				this.height = 60;
+				this.image.width = 60;
+				this.image.height = 60;
 				this.x = initialX;
-				this.y = initialY - this.height;
+				this.y = initialY - this.image.height;
 				this.speed = 5;
-				this.score = 0;
+				//this.score = 0;
 				this.alive = 1;
+				this.ammoRockets= 4;
 			}
 
-			function Missile(initialX, initialY) {
+			function Missile(initialY) {
 				this.image = new Image(); 
 				this.image.src = "resources/missile.png";
-				this.width = 10;
-				this.height = 23;
-				this.x = initialX;
-				this.y = initialY - this.height;
+				this.image.width = 10;
+				this.image.height = 23;
+				this.x = 0;
+				this.y = initialY - this.image.height;
 				this.speed = 10;
 			}
 
 			function EnemyJet(initialX, initialY) {
 				this.image = new Image(); 
 				this.image.src = "resources/sprite_jet_enemy.png";
-				this.width = 60;
-				this.height = 60;
+				this.image.width = 60;
+				this.image.height = 60;
 				this.x = initialX;
-				this.y = initialY - this.height;
+				this.y = initialY - this.image.height;
 				this.speed = 3;
 			}
 
@@ -129,22 +99,22 @@
 				this.width = 60;
 				this.height = 60;
 				this.x = initialX;
-				this.y = initialY - this.height;
+				this.y = initialY; 
 				this.startTime = 0;
 				this.horizontalSprites = 5;
 				this.verticalSprites = 5;
 			}
 
 			Missile.prototype.draw = function() {
-				CONTEXT.drawImage(this.image, this.x, this.y, this.width, this.height);
+				CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
 			};
 
 			EnemyJet.prototype.draw = function() {
-				CONTEXT.drawImage(this.image, this.x, this.y, this.width, this.height);
+				CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
 			};
 
 			Player.prototype.draw = function() {
-				CONTEXT.drawImage(this.image, this.x, this.y, this.width, this.height);
+				CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
 			};
 
 			Explosion.prototype.draw = function() {
@@ -158,34 +128,72 @@
 				return "x = " + this.x + ", y = " + this.y;
 			};
 
-
-			var ROCKET_AMMO = 4;
-			let alternateMissileWingCount = 0;
 			Player.prototype.fireMissile = function() {
-
-
-				if (ROCKET_AMMO > 0) {
-					var MISSILE = new Missile((CANVAS.width / 2), CANVAS.height);
-					if (alternateMissileWingCount == 0) {
-						MISSILE.x = PLAYER.x;
-						alternateMissileWingCount = 1;
-					} else if (alternateMissileWingCount == 1) {
-						MISSILE.x = PLAYER.x + 50;
-						alternateMissileWingCount = 0;
+				if (PLAYER.ammoRockets > 0) {
+					var missile = new Missile(PLAYER.y + 28);
+					if (ALTERNATE_MISSILE_WING == 0) {
+						missile.x = PLAYER.x;
+						ALTERNATE_MISSILE_WING = 1;
+					} else if (ALTERNATE_MISSILE_WING == 1) {
+						missile.x = PLAYER.x + 50;
+						ALTERNATE_MISSILE_WING = 0;
 					}
 
-					MISSILE.y = PLAYER.y + 28;
-					MISSILES.push(MISSILE);
-					ROCKET_AMMO -= 1;
+					MISSILES.push(missile);
+					PLAYER.ammoRockets -= 1;
 				}
 			};
 
-			var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
-			var MISSILES = [];
-			var ENEMY_JETS = [];
-			var EXPLOSIONS = [];
-			var TILE_WATER = new Image();
-			TILE_WATER.src = "resources/tile_water.png";
+			// ## Events ##
+			var Keys = {
+				UP: false,
+				LEFT: false,
+				RIGHT: false,
+				DOWN: false
+			};
+
+			window.onkeydown = function(e) {
+				if (Boolean(PLAYER.alive)) {
+					switch (e.keyCode) {
+						case 87: 
+							Keys.UP = true;
+						break;
+						case 65:
+							Keys.LEFT = true;
+						break;
+						case 68:
+							Keys.RIGHT = true;
+						break;
+						case 83:
+							Keys.DOWN = true;
+						break;
+						case 32:
+							PLAYER.fireMissile();
+						break;
+						case 73:
+							alert("Player.x = " + PLAYER.x + ", Player.Y = " + PLAYER.y);
+						break;
+					}
+				}
+			}
+			window.onkeyup = function(e) {
+				if (Boolean(PLAYER.alive)) {
+					switch (e.keyCode) {
+						case 87: 
+							Keys.UP = false;
+						break;
+						case 65:
+							Keys.LEFT = false;
+						break;
+						case 68:
+							Keys.RIGHT = false;
+						break;
+						case 83:
+							Keys.DOWN = false;
+						break;
+					}
+				}
+			}
 
 			window.onload = function() {
 				init();
@@ -193,7 +201,6 @@
 
 			function init() {
 				window.requestAnimationFrame(frame);
-				CONTEXT.fillText("fps:", 2, 25);
 				drawTileArray();
 			}
 
@@ -205,10 +212,9 @@
 
 				for (let i = 0; i < maxVerticalTiles; i++) {
 					for (let a = 0; a < maxHorizontalTiles; a++) {
-						CONTEXT.drawImage(TILE_WATER, a * tileSize, i * tileSize, tileSize, tileSize);
+						CONTEXT.drawImage(TILE_WATER, (a * tileSize), (i * tileSize), tileSize, tileSize);
 					}
 				}
-
 			}
 
 			function frame() {
@@ -229,23 +235,18 @@
 			 	FPS_COUNT += dt;
 				COUNT += dt;
 
-				document.getElementById("debug").innerHTML = "Missiles: " + MISSILES.length + " and enemies " + ENEMY_JETS.length;
+				move();
+
 				for (let i = 0; i < MISSILES.length; i++) {
 					for (let a = 0; a < ENEMY_JETS.length; a++) {
-						/*
-						document.getElementById("debug").innerHTML = MISSILES[i].y + ", " + ENEMY_JETS[a].y ;
-						alert(MISSILES[i].y + ", " + ENEMY_JETS[a].y);
-						*/
-						if (collision(MISSILES[i].x, MISSILES[i].y, ENEMY_JETS[a].x, ENEMY_JETS[a].y, MISSILES[i].width, MISSILES[i].height, (ENEMY_JETS[a].width + 5), ENEMY_JETS[a].height)) {
+						if (collision(MISSILES[i].x, MISSILES[i].y, ENEMY_JETS[a].x, ENEMY_JETS[a].y, MISSILES[i].image.width, MISSILES[i].image.height, (ENEMY_JETS[a].image.width + 5), ENEMY_JETS[a].image.height)) {
 	 						var explosion = new Explosion(ENEMY_JETS[a].x, ENEMY_JETS[a].y);
-							explosion.x = ENEMY_JETS[a].x;
-							explosion.y = ENEMY_JETS[a].y;
 							explosion.startTime = GLOBAL_TIMER;
 	 						EXPLOSIONS.push(explosion);
 
 							MISSILES.splice(i, 1);
 							ENEMY_JETS.splice(a, 1);
-							break;
+							break; // If there are more jets, the missile gets removed but is expected to be there when the jet for loop goes to the second loop..
 						}
 					}
 				}
@@ -264,26 +265,21 @@
 
 				if (Boolean(PLAYER.alive)) {
 					for (let i = 0; i < ENEMY_JETS.length; i++) {
-						//alert(PLAYER.x + ", " + PLAYER.y + " " + ENEMY_JETS[i].x + " " + ENEMY_JETS[i].y + " " + PLAYER.width + " " + PLAYER.height + " " + ENEMY_JETS[i].width + " " + ENEMY_JETS[i].height);    
-						if (collision(PLAYER.x, PLAYER.y, ENEMY_JETS[i].x, ENEMY_JETS[i].y, PLAYER.width, PLAYER.height, ENEMY_JETS[i].width, ENEMY_JETS[i].height)) {
+						if (collision(PLAYER.x, PLAYER.y, ENEMY_JETS[i].x, ENEMY_JETS[i].y, PLAYER.image.width, PLAYER.image.height, ENEMY_JETS[i].image.width, ENEMY_JETS[i].image.height)) {
 							var explosion = new Explosion(ENEMY_JETS[i].x, ENEMY_JETS[i].y);
-							explosion.x = ENEMY_JETS[i].x;
-							explosion.y = ENEMY_JETS[i].y;
 							explosion.startTime = GLOBAL_TIMER;
 							EXPLOSIONS.push(explosion);
 
-							var explosion = new Explosion(PLAYER.x, PLAYER.y);
-							explosion.x = PLAYER.x;
-							explosion.y = PLAYER.y;
-							explosion.startTime = GLOBAL_TIMER;
-							EXPLOSIONS.push(explosion);
+							var secondExplosion = new Explosion(PLAYER.x, PLAYER.y);
+							secondExplosion.startTime = GLOBAL_TIMER;
+							EXPLOSIONS.push(secondExplosion);
 							ENEMY_JETS.splice(i, 1);
 							PLAYER.alive = 0;
 						}
 					}
 				}
 
-				if (ROCKET_AMMO == 0) {
+				if (PLAYER.ammoRockets == 0) {
 					reload();
 				}
 
@@ -294,7 +290,6 @@
 				}
 
 				updateEnemies(dt);
-				move();
 			}
 
 			function collision (entityOneX, entityOneY, entityTwoX, entityTwoY, entityOneWidth, entityOneHeight, entityTwoWidth, entityTwoHeight) {
@@ -302,7 +297,6 @@
 				   entityOneX + entityOneWidth > entityTwoX &&
 				   entityOneY < entityTwoY + entityTwoHeight &&
 				   entityOneHeight + entityOneY > entityTwoY) {
-					// collision detected!
 					return true;
 				} else {
 					return false;
@@ -321,10 +315,6 @@
 
 		    */
 
-			var TIMER_RELOAD = 0;
-			var TIMER_STARTING_TIME = 0;
-			var RELOADING = 0;
-			var RELOAD_DURATION = 2000;
 			function reload() {
 				if (!Boolean(RELOADING)) {
 					TIMER_STARTING_TIME = GLOBAL_TIMER;
@@ -334,14 +324,13 @@
 				//console.log("if " + GLOBAL_TIMER + " > " + (TIMER_STARTING_TIME + 4000));
 				//alert("triggered");
 				if (GLOBAL_TIMER > (TIMER_STARTING_TIME + RELOAD_DURATION)) {
-					ROCKET_AMMO = 4;
+					PLAYER.ammoRockets = 4;
 					TIMER_STARTING_TIME = 0;
 					RELOADING = 0;
 				}
 			}
 			
 
-			var enemySpawnInterval = 2000;
 			function updateEnemies (dt) {
 				if (ENEMY_JETS.length != 0) {
 					for (let i = 0; i < ENEMY_JETS.length; i++) {
@@ -361,9 +350,6 @@
 				}
 			}
 
-			var EXPLOSION = new Image();
-			EXPLOSION.src = "resources/sprite_explosion.png";
-			var TEMP_TOTAL_FRAMERATE = 0;
 			function render(dt) {
 				if ((COUNT >= 0.06) ) {
 					/*
@@ -375,8 +361,8 @@
 					*/
 					drawTileArray();
 					CONTEXT.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
-					if (ROCKET_AMMO != 0) {
-						CONTEXT.fillText("ROCKETS: " + ROCKET_AMMO, 2, CANVAS.height - 4);
+					if (PLAYER.ammoRockets != 0) {
+						CONTEXT.fillText("ROCKETS: " + PLAYER.ammoRockets, 2, CANVAS.height - 4);
 					} else {
 						CONTEXT.fillText("ROCKETS: reloading", 2, CANVAS.height - 4);
 					}
@@ -427,11 +413,7 @@
 				CONTEXT.font = "30px Arial";
 			}
 
-			var lastKnownPlayerPositionX = 0;
-			var lastKnownPlayerPositionY = 0;
 			function move() {
-				lastKnownPlayerPositionX = PLAYER.x;
-				lastKnownPlayerPositionY = PLAYER.y;
 
 				switch (Boolean(Keys)) {
 					case Keys.UP && Keys.LEFT: // Northeast 
@@ -482,11 +464,11 @@
 			}
 
 			function isInsideBounds(x, y) {
-				if (y > (CANVAS.height - PLAYER.height)) { // prevent down
+				if (y > (CANVAS.height - PLAYER.image.height)) { // prevent down
 					return 0;
 				} else if (x < 0) {
 					return 0;
-				} else if (x > (CANVAS.width - PLAYER.width)) {
+				} else if (x > (CANVAS.width - PLAYER.image.width)) {
 					return 0;
 				} else if (y < 0) {
 					return 0;
@@ -494,6 +476,12 @@
 					return 1;
 				}
 			}
+
+			/*
+			   Player has a prototype object from which it inherits stuff
+			   When instantiating from this class, a link is created to the original Player constructor class
+			   Player is a prototype, the PLAYER var below inherits from the prototypeaPlayer has a prototype object from which it inherits stuffPlayer has a prototype object from which it inherits stuff
+		    */
 
 		</script>
 	</body> 
