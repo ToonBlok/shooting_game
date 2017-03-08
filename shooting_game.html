@@ -28,7 +28,7 @@
 	</head>
 	<body>
 		<canvas id="screen" class="centeredElement" width="1200" height="700"></canvas>
-		<p id="debug">...</p>
+		<p id="debug">left side of collision box is fucked up</p>
 
 		<script>
 			const CANVAS = document.getElementById('screen');
@@ -70,15 +70,18 @@
 				this.speed = 5;
 				//this.score = 0;
 				this.alive = 1;
-				this.ammoRockets= 4;
+				this.maxRockets = 12;
+				this.ammoRockets = 12;
 			}
 
 			function Missile(initialY) {
 				this.image = new Image(); 
-				//this.image.src = "resources/missile.png";
-				this.image.src = "resources/spritesheet_missile4.png";
-				this.image.width = 204;
-				this.image.height = 213;
+				this.image.src = "resources/sprite_missile2.png";
+				//this.image.src = "resources/spritesheet_missile4.png";
+				//this.image.width = 204;
+				//this.image.height = 213;
+				this.image.width = 7;
+				this.image.height = 35;
 				this.x = 0;
 				this.y = initialY - this.image.height;
 				this.speed = 7;
@@ -109,12 +112,13 @@
 
 				this.maxFrames = 25;
 				this.tickCount = -1;
+				this.rocketTimer = 0;
 			}
 
 			Missile.prototype.draw = function() {
-				//CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
+				CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
 				//alert(this.x + ", " + this.y);
-				CONTEXT.drawImage(this.image, this.tickCount * 204, 0, this.image.width, this.image.height, this.x, this.y, 50, 50);
+				//CONTEXT.drawImage(this.image, this.tickCount * 204, 0, this.image.width, this.image.height, this.x, this.y, 50, 50);
 			};
 
 			Missile.prototype.update = function() {
@@ -154,7 +158,17 @@
 
 			Player.prototype.fireMissile = function() {
 				if (PLAYER.ammoRockets > 0) {
-					//var missile = new Missile(PLAYER.y + 28);
+				 	let middleOfJet = PLAYER.x + (PLAYER.image.width / 2);
+					var missile = new Missile(PLAYER.y + 47);
+					if (ALTERNATE_MISSILE_WING == 0) { // left
+						missile.x = middleOfJet - 25;
+						ALTERNATE_MISSILE_WING = 1;
+					} else if (ALTERNATE_MISSILE_WING == 1) { // right
+						missile.x = ((middleOfJet + 25) - missile.image.width);
+						ALTERNATE_MISSILE_WING = 0;
+					}
+					/*
+
 					var missile = new Missile(PLAYER.y + 225);
 					if (ALTERNATE_MISSILE_WING == 0) {
 						missile.x = PLAYER.x - 20;
@@ -163,6 +177,7 @@
 						missile.x = PLAYER.x + 22;
 						ALTERNATE_MISSILE_WING = 0;
 					}
+					   */
 
 					MISSILES.push(missile);
 					PLAYER.ammoRockets -= 1;
@@ -260,6 +275,8 @@
 				NOW = timestamp();
 				//alert(LAST + " " + NOW);
 				var frameDuration  = NOW - LAST;
+				COUNT += frameDuration;
+	 			//console.log(COUNT);
 				//console.log("LAST: " + LAST + ", NOW:" + NOW + ", frameDuration:" + frameDuration);
 				LAST = NOW;
 				update(frameDuration);
@@ -275,16 +292,17 @@
 			function update(frameDuration) {
 				GLOBAL_TIMER += frameDuration;
 			 	FPS_COUNT += frameDuration;
-				COUNT += frameDuration;
 
 				move();
 				for (let i = 0; i < EXPLOSIONS.length; i++) {
 					EXPLOSIONS[i].update();
 				}
 
+				/*
 				for (let i = 0; i < MISSILES.length; i++) {
 					MISSILES[i].update();
 				}
+				*/
 
 				for (let i = 0; i < MISSILES.length; i++) {
 					for (let a = 0; a < ENEMY_JETS.length; a++) {
@@ -373,7 +391,7 @@
 				//console.log("if " + GLOBAL_TIMER + " > " + (TIMER_STARTING_TIME + 4000));
 				//alert("triggered");
 				if (GLOBAL_TIMER > (TIMER_STARTING_TIME + RELOAD_DURATION)) {
-					PLAYER.ammoRockets = 4;
+					PLAYER.ammoRockets = PLAYER.maxRockets;
 					TIMER_STARTING_TIME = 0;
 					RELOADING = 0;
 				}
@@ -381,10 +399,16 @@
 			
 
 			function updateEnemies (frameDuration) {
-				if (ENEMY_JETS.length != 0) {
-					for (let i = 0; i < ENEMY_JETS.length; i++) {
-						ENEMY_JETS[i].y += ENEMY_JETS[i].speed;
-					}
+				for (let i = 0; i < ENEMY_JETS.length; i++) {
+					ENEMY_JETS[i].y += ENEMY_JETS[i].speed;
+					/*
+					var randomSway = Math.floor(Math.random() * 3);
+					if (randomSway == 0) {
+						ENEMY_JETS[i].x += 1 ;
+					} else if (randomSway == 1) {
+						ENEMY_JETS[i].x -= 1;
+					} 
+					*/
 				}
 				// Uncomment to get more jets
 				//if ((GLOBAL_TIMER > enemySpawnInterval) && ENEMY_JETS.length == 0) {
@@ -400,7 +424,8 @@
 			}
 
 			function render(frameDuration) {
-				if ((COUNT >= 0.06) ) {
+				console.log("if (" + COUNT + " >= 0.06)");
+				if (COUNT >= 0.06) {
 					/*
 					if (explosion.y != 0) {
 						alert("explosion requested at" + explosion.x + ", " + explosion.y);
@@ -444,7 +469,7 @@
 
 					TOTAL_FRAMES += 1;
 				}
-				CONTEXT.fillText(Math.round(GLOBAL_TIMER), 1100, 25);
+				CONTEXT.fillText(Math.floor(GLOBAL_TIMER), 1100, 25);
 			 // document.getElementById("debug").innerHTML = Math.round(GLOBAL_TIMER);
 			}
 			
