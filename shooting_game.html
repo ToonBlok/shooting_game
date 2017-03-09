@@ -276,6 +276,7 @@
 				//alert(LAST + " " + NOW);
 				var frameDuration  = NOW - LAST;
 				COUNT += frameDuration;
+				console.log("frameDuration: " + frameDuration + ", and COUNT: " + COUNT);
 	 			//console.log(COUNT);
 				//console.log("LAST: " + LAST + ", NOW:" + NOW + ", frameDuration:" + frameDuration);
 				LAST = NOW;
@@ -359,6 +360,54 @@
 				updateEnemies(frameDuration);
 			}
 
+			function render(frameDuration) {
+				//console.log("if (" + COUNT + " >= 0.06)");
+				// was 0.06
+				if (COUNT >= 16.66) {
+					drawTileArray();
+					for (let i = 0; i < MISSILES.length; i++) {
+						MISSILES[i].draw();
+					}
+					for (let i = 0; i < ENEMY_JETS.length; i++) {
+						ENEMY_JETS[i].draw();
+					}
+					for (let i = 0; i < EXPLOSIONS.length; i++) {
+						EXPLOSIONS[i].draw();
+					}
+					CONTEXT.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
+
+
+					if (PLAYER.ammoRockets != 0) {
+						CONTEXT.fillText("ROCKETS: " + PLAYER.ammoRockets, 2, CANVAS.height - 4);
+					} else {
+						CONTEXT.fillText("ROCKETS: reloading", 2, CANVAS.height - 4);
+					}
+
+					// this is wrong...
+					if(FPS_COUNT >= 1000) {
+					    document.getElementById("debug").innerHTML = TOTAL_FRAMES;
+						CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
+						TEMP_TOTAL_FRAMERATE = TOTAL_FRAMES;
+						TOTAL_FRAMES = 0;
+						FPS_COUNT = 0;
+					}
+
+					if (Boolean(PLAYER.alive)) {
+						PLAYER.draw();
+					}
+
+					COUNT = 0;
+
+					if (!Boolean(PLAYER.alive)) {
+						drawMenu();
+					}
+
+					TOTAL_FRAMES += 1;
+				}
+				CONTEXT.fillText(Math.floor(GLOBAL_TIMER), 1100, 25);
+			 // document.getElementById("debug").innerHTML = Math.round(GLOBAL_TIMER);
+			}
+
 			function collision (entityOneX, entityOneY, entityTwoX, entityTwoY, entityOneWidth, entityOneHeight, entityTwoWidth, entityTwoHeight) {
 				if (entityOneX < entityTwoX + entityTwoWidth &&
 				   entityOneX + entityOneWidth > entityTwoX &&
@@ -423,55 +472,6 @@
 				}
 			}
 
-			function render(frameDuration) {
-				console.log("if (" + COUNT + " >= 0.06)");
-				if (COUNT >= 0.06) {
-					/*
-					if (explosion.y != 0) {
-						alert("explosion requested at" + explosion.x + ", " + explosion.y);
-						//CONTEXT.drawImage(EXPLOSION.image, explosion.x, explosion.y, 20, 20);
-
-					}
-					*/
-					drawTileArray();
-					CONTEXT.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
-					if (PLAYER.ammoRockets != 0) {
-						CONTEXT.fillText("ROCKETS: " + PLAYER.ammoRockets, 2, CANVAS.height - 4);
-					} else {
-						CONTEXT.fillText("ROCKETS: reloading", 2, CANVAS.height - 4);
-					}
-
-					if(FPS_COUNT >= 1000) {
-						CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
-						TEMP_TOTAL_FRAMERATE = TOTAL_FRAMES;
-						TOTAL_FRAMES = 0;
-						FPS_COUNT = 0;
-					}
-
-					if (Boolean(PLAYER.alive)) {
-						PLAYER.draw();
-					}
-
-					for (let i = 0; i < MISSILES.length; i++) {
-						MISSILES[i].draw();
-					}
-					for (let i = 0; i < ENEMY_JETS.length; i++) {
-						ENEMY_JETS[i].draw();
-					}
-					for (let i = 0; i < EXPLOSIONS.length; i++) {
-						EXPLOSIONS[i].draw();
-					}
-					COUNT = 0;
-
-					if (!Boolean(PLAYER.alive)) {
-						drawMenu();
-					}
-
-					TOTAL_FRAMES += 1;
-				}
-				CONTEXT.fillText(Math.floor(GLOBAL_TIMER), 1100, 25);
-			 // document.getElementById("debug").innerHTML = Math.round(GLOBAL_TIMER);
-			}
 			
 			function drawMenu() {
 				let menuSizeX = 500;
