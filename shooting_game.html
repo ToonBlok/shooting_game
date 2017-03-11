@@ -25,6 +25,8 @@
 			}
 
 		</style>
+		<script type="text/javascript" src="javascript/gameloop.js"></script>
+
 	</head>
 	<body>
 		<canvas id="screen" class="centeredElement" width="1200" height="700"></canvas>
@@ -237,6 +239,7 @@
 
 			window.onload = function() {
 				init();
+				Greet();
 			}
 
 			function init() {
@@ -245,7 +248,7 @@
 			}
 
 			function drawTileArray() {
-				let tileSize = 50;
+				let tileSize = 50; // size 15 costs 30 frames, 50 cost no performance it seems
 				let maxHorizontalTiles = CANVAS.width / tileSize;
 				let maxVerticalTiles = CANVAS.height / tileSize;
 				let maxTiles = maxVerticalTiles * maxHorizontalTiles;
@@ -271,12 +274,13 @@
 				
 
 		    */
+/*
 			function frame() {
 				NOW = timestamp();
 				//alert(LAST + " " + NOW);
 				var frameDuration  = NOW - LAST;
 				COUNT += frameDuration;
-				console.log("frameDuration: " + frameDuration + ", and COUNT: " + COUNT);
+				//console.log("frameDuration: " + frameDuration + ", and COUNT: " + COUNT);
 	 			//console.log(COUNT);
 				//console.log("LAST: " + LAST + ", NOW:" + NOW + ", frameDuration:" + frameDuration);
 				LAST = NOW;
@@ -284,6 +288,7 @@
 				render(frameDuration);
 				window.requestAnimationFrame(frame);
 			}
+			*/
 
 			// Returns ms since program started
 			function timestamp() {
@@ -292,7 +297,8 @@
 
 			function update(frameDuration) {
 				GLOBAL_TIMER += frameDuration;
-			 	FPS_COUNT += frameDuration;
+				calculateFps();
+
 
 				move();
 				for (let i = 0; i < EXPLOSIONS.length; i++) {
@@ -361,10 +367,9 @@
 			}
 
 			function render(frameDuration) {
-				//console.log("if (" + COUNT + " >= 0.06)");
-				// was 0.06
 				if (COUNT >= 16.66) {
 					drawTileArray();
+					//CONTEXT.fillRect(0, 0, CANVAS.width, CANVAS.height);
 					for (let i = 0; i < MISSILES.length; i++) {
 						MISSILES[i].draw();
 					}
@@ -383,14 +388,7 @@
 						CONTEXT.fillText("ROCKETS: reloading", 2, CANVAS.height - 4);
 					}
 
-					// this is wrong...
-					if(FPS_COUNT >= 1000) {
-					    document.getElementById("debug").innerHTML = TOTAL_FRAMES;
-						CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
-						TEMP_TOTAL_FRAMERATE = TOTAL_FRAMES;
-						TOTAL_FRAMES = 0;
-						FPS_COUNT = 0;
-					}
+
 
 					if (Boolean(PLAYER.alive)) {
 						PLAYER.draw();
@@ -402,10 +400,29 @@
 						drawMenu();
 					}
 
-					TOTAL_FRAMES += 1;
 				}
 				CONTEXT.fillText(Math.floor(GLOBAL_TIMER), 1100, 25);
 			 // document.getElementById("debug").innerHTML = Math.round(GLOBAL_TIMER);
+			}
+
+			function calculateFps () {
+				//console.log("Before: " + FPS_COUNT);
+				if (FPS_COUNT == 0) {
+					FPS_COUNT = GLOBAL_TIMER;
+				}
+				//console.log("After: " + FPS_COUNT);
+
+				//console.log(GLOBAL_TIMER + ", " + FPS_COUNT);
+				// this is wrong...
+				if((GLOBAL_TIMER - 1000) > FPS_COUNT) {
+					//document.getElementById("debug").innerHTML = TOTAL_FRAMES;
+					CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
+					TEMP_TOTAL_FRAMERATE = TOTAL_FRAMES;
+					TOTAL_FRAMES = 0;
+					FPS_COUNT = 0;
+				}
+
+				TOTAL_FRAMES += 1;
 			}
 
 			function collision (entityOneX, entityOneY, entityTwoX, entityTwoY, entityOneWidth, entityOneHeight, entityTwoWidth, entityTwoHeight) {
@@ -447,7 +464,12 @@
 			}
 			
 
+			var TIMER_ENEMIES = 0;
 			function updateEnemies (frameDuration) {
+				if (TIMER_ENEMIES == 0) {
+					TIMER_ENEMIES = GLOBAL_TIMER;
+				} 
+
 				for (let i = 0; i < ENEMY_JETS.length; i++) {
 					ENEMY_JETS[i].y += ENEMY_JETS[i].speed;
 					/*
@@ -461,7 +483,9 @@
 				}
 				// Uncomment to get more jets
 				//if ((GLOBAL_TIMER > enemySpawnInterval) && ENEMY_JETS.length == 0) {
-				if ((GLOBAL_TIMER > enemySpawnInterval)) {
+				if ((GLOBAL_TIMER - 1000) > TIMER_ENEMIES) {
+				//if ((GLOBAL_TIMER > enemySpawnInterval)) {
+					console.log("Spawned at " + GLOBAL_TIMER);
 					var enemy_jet = new EnemyJet((CANVAS.width / 2), CANVAS.height);
 					var randomSpawnX = Math.floor(Math.random() * (CANVAS.width / 100));
 					enemy_jet.x = randomSpawnX * 100;
@@ -469,6 +493,8 @@
 					ENEMY_JETS.push(enemy_jet);
 					// Uncomment to get more jets
 					enemySpawnInterval += 2000;
+					TIMER_ENEMIES = 0;
+					TIMER_ENEMIES = GLOBAL_TIMER;
 				}
 			}
 
