@@ -13,8 +13,9 @@ gReload_icon.src = "resources/ammo_icon.png";
 let ALTERNATE_MISSILE_WING = 0;
 
 var MISSILES = [];
-var ENEMY_JETS = [];
-var EXPLOSIONS = [];
+var gEnemy_jets = [];
+var gExplosions = [];
+var gBoats = [];
 
 var TIMER_RELOAD = 0;
 var TIMER_STARTING_TIME = 0;
@@ -43,9 +44,6 @@ function Player(initialX, initialY) {
 
 	this.draw = function() {
 		CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
-	}
-	this.getInfo = function() {
-		return "x = " + this.x + ", y = " + this.y;
 	}
 	this.fireMissile = function() {
 		if (PLAYER.ammoRockets > 0) {
@@ -100,7 +98,20 @@ function EnemyJet(initialX, initialY) {
 	this.x = initialX;
 	this.y = initialY - this.image.height;
 	this.speed = 3;
-	this.enemyWaypoints = [[CANVAS.width / 2, CANVAS.height / 2], [42, 42]];
+	//this.enemyWaypoints = [[CANVAS.width / 2, CANVAS.height / 2], [42, 42]];
+	this.waypoints = [];
+}
+
+function NeutralBoat(initialX, initialY) {
+	this.image = new Image(); 
+	this.image.src = "resources/neutral_ship.png";
+	this.image.width = 40;
+	this.image.height = 130;
+	this.x = initialX;
+	this.y = initialY;
+	this.speed = 0.5;
+	//this.enemyWaypoints = [[CANVAS.width / 2, CANVAS.height / 2], [42, 42]];
+	this.waypoints = [];
 }
 
 function Explosion(initialX, initialY) {
@@ -118,9 +129,13 @@ function Explosion(initialX, initialY) {
 	this.rocketTimer = 0;
 }
 
-EnemyJet.prototype.getWayPoints = function() {
+NeutralBoat.prototype.draw = function() {
+	CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
+};
 
-}
+//EnemyJet.prototype.getWayPoints = function() {
+//
+//};
 
 Missile.prototype.draw = function() {
 	CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
@@ -229,46 +244,85 @@ function drawTileArray() {
 var gTimer_enemies = 0;
 var gSpawn_interval = 5000;
 function updateEnemies (frameDuration) {
-	for (let i = 0; i < ENEMY_JETS.length; i++) {
-		if (ENEMY_JETS[i].y > CANVAS.height) {
-			ENEMY_JETS.splice(i, 1);
+	for (let i = 0; i < gEnemy_jets.length; i++) {
+		if (gEnemy_jets[i].waypoints != 5) {
+			gEnemy_jets[i].waypoints.push([Math.floor(Math.random() * CANVAS.width), Math.floor(Math.random() * CANVAS.height / 2)]);
+
+		}
+		if (gEnemy_jets[i].y > CANVAS.height) {
+			gEnemy_jets.splice(i, 1);
 		}
 	}
 
-	for (let i = 0; i < ENEMY_JETS.length; i++) {
-		if(ENEMY_JETS[i].x > ENEMY_JETS[i].enemyWaypoints[0][0]) {
-			if (ENEMY_JETS[i].x - ENEMY_JETS[i].speed < ENEMY_JETS[i].enemyWaypoints[0][0]) {
-				ENEMY_JETS[i].x = ENEMY_JETS[i].enemyWaypoints[0][0];
+	for (let i = 0; i < gEnemy_jets.length; i++) {
+		//document.getElementById("debug").innerHTML = gEnemy_jets[0].waypoints[0][0] + ", " + gEnemy_jets[0].waypoints[0][1];
+		if(gEnemy_jets[i].x > gEnemy_jets[i].waypoints[0][0]) {
+			if (gEnemy_jets[i].x - gEnemy_jets[i].speed < gEnemy_jets[i].waypoints[0][0]) {
+				gEnemy_jets[i].x = gEnemy_jets[i].waypoints[0][0];
 			} else {
-				ENEMY_JETS[i].x -= ENEMY_JETS[i].speed;
+				gEnemy_jets[i].x -= gEnemy_jets[i].speed;
 			}
-		} else if(ENEMY_JETS[i].x < ENEMY_JETS[i].enemyWaypoints[0][0]) {
-			if (ENEMY_JETS[i].x + ENEMY_JETS[i].speed > ENEMY_JETS[i].enemyWaypoints[0][0]) {
-				ENEMY_JETS[i].x = ENEMY_JETS[i].enemyWaypoints[0][0];
+		} else if(gEnemy_jets[i].x < gEnemy_jets[i].waypoints[0][0]) {
+			if (gEnemy_jets[i].x + gEnemy_jets[i].speed > gEnemy_jets[i].waypoints[0][0]) {
+				gEnemy_jets[i].x = gEnemy_jets[i].waypoints[0][0];
 			} else {
-				ENEMY_JETS[i].x += ENEMY_JETS[i].speed;
+				gEnemy_jets[i].x += gEnemy_jets[i].speed;
 			}
 		}
-		if(ENEMY_JETS[i].y != ENEMY_JETS[i].enemyWaypoints[0][1]) {
-			ENEMY_JETS[i].y += ENEMY_JETS[i].speed;
+		if(gEnemy_jets[i].y < gEnemy_jets[i].waypoints[0][1]) {
+			if (gEnemy_jets[i].y + gEnemy_jets[i].speed > gEnemy_jets[i].waypoints[0][1]) { // DOWN 
+				gEnemy_jets[i].y = gEnemy_jets[i].waypoints[0][1];
+				//alert("ok");
+			} else {
+				gEnemy_jets[i].y += gEnemy_jets[i].speed;
+			}
+		} else if(gEnemy_jets[i].y > gEnemy_jets[i].waypoints[0][1]) {                      // UP 
+			if (gEnemy_jets[i].y - gEnemy_jets[i].speed < gEnemy_jets[i].waypoints[0][1]) {
+				gEnemy_jets[i].y = gEnemy_jets[i].waypoints[0][1];
+
+			} else {
+				gEnemy_jets[i].y -= gEnemy_jets[i].speed;
+			}
+		}
+	}
+	for (let i = 0; i < gBoats.length; i++) {
+		gBoats[i].y -= gBoats[i].speed;
+	}
+	for (let i = 0; i < gBoats.length; i++) {
+		if (gBoats[i].y < 0 - gBoats[i].image.height) {
+			gBoats.splice(i, 1);
+		}
+	}
+	/*
+	 * if 0 < y400
+	 * if 0 + 10 < 
+	 
+	 */
+	document.getElementById("debug").innerHTML = gBoats.length;
+
+
+
+	for (let i = 0; i < gEnemy_jets.length; i++) {
+		if(gEnemy_jets[i].x == gEnemy_jets[i].waypoints[0][0] &&
+		   gEnemy_jets[i].y == gEnemy_jets[i].waypoints[0][1]) {
+			gEnemy_jets[i].waypoints.splice(0, 1);
 		}
 	}
 
-	for (let i = 0; i < ENEMY_JETS.length; i++) {
-		if(ENEMY_JETS[i].x == ENEMY_JETS[i].enemyWaypoints[0][0] &&
-		   ENEMY_JETS[i].y == ENEMY_JETS[i].enemyWaypoints[0][1]) {
-			ENEMY_JETS[i].enemyWaypoints.splice(0, 1);
-		}
-	}
 
-
-	if (gTimer > 1000 && ENEMY_JETS < 1) {
+	if (gTimer > 1000 && gEnemy_jets < 1) {
 	  	var enemy_jet = new EnemyJet((CANVAS.width / 2), CANVAS.height);
 	  	var randomSpawnX = Math.floor(Math.random() * (CANVAS.width / 100));
 	  	enemy_jet.x = randomSpawnX * 100;
 	  	enemy_jet.y = -100;
-	  	ENEMY_JETS.push(enemy_jet);
-
+	  	gEnemy_jets.push(enemy_jet);
+	}
+	if (gBoats < 1) {
+	  	var boat = new NeutralBoat((CANVAS.width / 2), CANVAS.height);
+	  	var randomSpawnX = Math.floor(Math.random() * (CANVAS.width / 100));
+	  	boat.x = randomSpawnX * 100;
+	  	boat.y = CANVAS.height;
+	  	gBoats.push(boat);
 	}
 //	console.log(frameDuration);
 //	if (gTimer_enemies == 0) {
@@ -282,7 +336,7 @@ function updateEnemies (frameDuration) {
 //		var randomSpawnX = Math.floor(Math.random() * (CANVAS.width / 100));
 //		enemy_jet.x = randomSpawnX * 100;
 //		enemy_jet.y = -100;
-//		ENEMY_JETS.push(enemy_jet);
+//		gEnemy_jets.push(enemy_jet);
 //
 //		gTimer_enemies = 0;
 //	}

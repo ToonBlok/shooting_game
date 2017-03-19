@@ -27,21 +27,21 @@ function update(gFrameDuration) {
 	calculateFps();
 	move();
 
-	for (let i = 0; i < EXPLOSIONS.length; i++) {
-		EXPLOSIONS[i].update();
+	for (let i = 0; i < gExplosions.length; i++) {
+		gExplosions[i].update();
 	}
 
 	for (let i = 0; i < MISSILES.length; i++) {
-		for (let a = 0; a < ENEMY_JETS.length; a++) {
+		for (let a = 0; a < gEnemy_jets.length; a++) {
 
-			if (collision(MISSILES[i].x, MISSILES[i].y, ENEMY_JETS[a].x, ENEMY_JETS[a].y, MISSILES[i].image.width, MISSILES[i].image.height, (ENEMY_JETS[a].image.width + 5), ENEMY_JETS[a].image.height)) {
+			if (collision(MISSILES[i].x, MISSILES[i].y, gEnemy_jets[a].x, gEnemy_jets[a].y, MISSILES[i].image.width, MISSILES[i].image.height, (gEnemy_jets[a].image.width + 5), gEnemy_jets[a].image.height)) {
 
-				var explosion = new Explosion(ENEMY_JETS[a].x, ENEMY_JETS[a].y);
+				var explosion = new Explosion(gEnemy_jets[a].x, gEnemy_jets[a].y);
 				explosion.startTime = gTimer;
-				EXPLOSIONS.push(explosion);
+				gExplosions.push(explosion);
 
 				MISSILES.splice(i, 1);
-				ENEMY_JETS.splice(a, 1);
+				gEnemy_jets.splice(a, 1);
 				break; 
 			}
 
@@ -56,16 +56,16 @@ function update(gFrameDuration) {
 
 
 	if (Boolean(PLAYER.alive)) {
-		for (let i = 0; i < ENEMY_JETS.length; i++) {
-			if (collision(PLAYER.x, PLAYER.y, ENEMY_JETS[i].x, ENEMY_JETS[i].y, PLAYER.image.width, PLAYER.image.height, ENEMY_JETS[i].image.width, ENEMY_JETS[i].image.height)) {
-				var explosion = new Explosion(ENEMY_JETS[i].x, ENEMY_JETS[i].y);
+		for (let i = 0; i < gEnemy_jets.length; i++) {
+			if (collision(PLAYER.x, PLAYER.y, gEnemy_jets[i].x, gEnemy_jets[i].y, PLAYER.image.width, PLAYER.image.height, gEnemy_jets[i].image.width, gEnemy_jets[i].image.height)) {
+				var explosion = new Explosion(gEnemy_jets[i].x, gEnemy_jets[i].y);
 				explosion.startTime = gTimer;
-				EXPLOSIONS.push(explosion);
+				gExplosions.push(explosion);
 
 				var secondExplosion = new Explosion(PLAYER.x, PLAYER.y);
 				secondExplosion.startTime = gTimer;
-				EXPLOSIONS.push(secondExplosion);
-				ENEMY_JETS.splice(i, 1);
+				gExplosions.push(secondExplosion);
+				gEnemy_jets.splice(i, 1);
 				PLAYER.alive = 0;
 			}
 		}
@@ -75,9 +75,9 @@ function update(gFrameDuration) {
 		PLAYER.reload();
 	}
 
-	for (let i = 0; i < EXPLOSIONS.length; i++) {
-		if ((gTimer - 1000) > EXPLOSIONS[i].startTime) {
-			EXPLOSIONS.splice(i, 1);
+	for (let i = 0; i < gExplosions.length; i++) {
+		if ((gTimer - 1000) > gExplosions[i].startTime) {
+			gExplosions.splice(i, 1);
 		}
 	}
 
@@ -90,21 +90,24 @@ function render() {
 	if (gTotal_frames > 45)
 		console.log(gTotal_frames);
 
+	//CONTEXT.fillRect(0, 0, CANVAS.width, CANVAS.height);
+	for (let i = 0; i < gBoats.length; i++) {
+		gBoats[i].draw();
+	}
+	for (let i = 0; i < MISSILES.length; i++) {
+		MISSILES[i].draw();
+	}
+	for (let i = 0; i < gEnemy_jets.length; i++) {
+		gEnemy_jets[i].draw();
+	}
+	for (let i = 0; i < gExplosions.length; i++) {
+		gExplosions[i].draw();
+	}
+	CONTEXT.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
 	if (Boolean(PLAYER.alive)) {
 		PLAYER.draw();
 		//console.log("Player DRAWN");
 	}
-	//CONTEXT.fillRect(0, 0, CANVAS.width, CANVAS.height);
-	for (let i = 0; i < MISSILES.length; i++) {
-		MISSILES[i].draw();
-	}
-	for (let i = 0; i < ENEMY_JETS.length; i++) {
-		ENEMY_JETS[i].draw();
-	}
-	for (let i = 0; i < EXPLOSIONS.length; i++) {
-		EXPLOSIONS[i].draw();
-	}
-	CONTEXT.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
 
 
 	if (PLAYER.ammoRockets != 0) {
