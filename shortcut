@@ -1,0 +1,5 @@
+#!/bin/bash
+
+vim -p javascript/main.js javascript/gameloop.js shooting_game.html
+
+

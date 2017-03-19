@@ -1,0 +1,31 @@
+x = 600
+x + w = 630
+
+y = 50
+y + h = 80
+
+if (rect1.x < rect2.x + rect2.width &&
+   rect1.x + rect1.width > rect2.x &&
+   rect1.y < rect2.y + rect2.height &&
+   rect1.height + rect1.y > rect2.y) {
+    // collision detected!
+}
+
+rect1 = missile
+rect2 = jetX
+
+if (missileX < jetX + width &&
+   missileX + width > jetX &&
+   missileY < jetY + height &&
+   height + missileY > jetY) {
+    // collision detected!
+}
+
+missile is at 75, 5 pixels into the jet...
+missile is at x600
+600 < 600 + 30
+600 + 30 > 600
+75 < 80 + 30
+30 + 75 > 80
+
+You forgot to add the width and height of the missile... do this tomorrow

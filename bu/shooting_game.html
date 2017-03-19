@@ -1,0 +1,264 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Shooting game</title>
+		<style>
+
+			.centeredElement {
+			  position: fixed; /* or absolute */
+			  top: 50%;
+			  left: 50%;
+			  margin-top: -350px; /* got to be 50% of canvas height */
+			  margin-left: -600px; /* got to be 50% of canvas width */
+			}
+
+			p { 
+				font-family: "Times New Roman";
+				border:1px solid #d3d3d3; 
+				padding-left: 0;
+			   	padding-right: 0;
+			   	margin-left: auto;
+			   	margin-right: auto; 
+				display: block;
+			   	width: 800px;
+			}
+
+		</style>
+	</head>
+	<body>
+		<canvas id="screen" class="centeredElement" width="1200" height="700"></canvas>
+		<p id="debug">...</p>
+
+		<script>
+			const CANVAS = document.getElementById('screen');
+			const CONTEXT = CANVAS.getContext('2d');
+			CONTEXT.font = "30px Arial";
+			var NOW, DT, LAST = timestamp();
+			var COUNT = 0; // needs better name
+			var FPS_COUNT = 0;
+			var TOTAL_FRAMES = 0;
+
+			var Keys = {
+				UP: false,
+				LEFT: false,
+				RIGHT: false,
+				DOWN: false
+			};
+			// console.log(); then go to debug in firefox
+
+			document.getElementById("screen").style.backgroundColor = 'rgb(51, 171, 210)';
+
+			window.onkeydown = function(e) {
+				//e.preventDefault(); // Prevent the default action of keydown
+
+				if (e.keyCode == 87)
+					Keys.UP = true;
+				else if (e.keyCode == 65)
+					Keys.LEFT = true;
+				else if (e.keyCode == 68)
+					Keys.RIGHT = true;
+				else if (e.keyCode == 83)
+					Keys.DOWN = true;
+				else if (e.keyCode == 32) // space
+					PLAYER.fireMissile();
+			}
+			window.onkeyup = function(e) {
+				//e.preventDefault();
+
+				if (e.keyCode == 87)
+					Keys.UP = false;
+				else if (e.keyCode == 65)
+					Keys.LEFT = false;
+				else if (e.keyCode == 68)
+					Keys.RIGHT = false;
+				else if (e.keyCode == 83)
+					Keys.DOWN = false;
+			}
+
+			/*
+			   Player has a prototype object from which it inherits stuff
+			   When instantiating from this class, a link is created to the original Player constructor class
+			   Player is a prototype, the PLAYER var below inherits from the prototypeaPlayer has a prototype object from which it inherits stuffPlayer has a prototype object from which it inherits stuff
+
+		    */
+			function Player(initialX, initialY) { // constructor function and class (not object literal) 
+				this.image = new Image(); 
+				this.image.src = "resources/jet_sprite.png";
+				this.width = 60;
+				this.height = 60;
+				this.x = initialX;
+				this.y = initialY - this.height;
+				this.speed = 5;
+			}
+
+			function Missile(initialX, initialY) {
+				this.image = new Image(); 
+				this.image.src = "resources/missile.png";
+				this.width = 10;
+				this.height = 23;
+				this.x = initialX;
+				this.y = initialY - this.height;
+				this.speed = 5;
+				this.fired = 0;
+			}
+
+			Missile.prototype.draw = function() {
+				CONTEXT.drawImage(MISSILE.image, this.x, this.y, this.width, this.height);
+			};
+
+			Player.prototype.getInfo = function() {
+				return "x = " + this.x + ", y = " + this.y;
+			};
+
+			Player.prototype.draw = function() {
+				CONTEXT.drawImage(PLAYER.image, this.x, this.y, this.width, this.height);
+			};
+
+			Player.prototype.fireMissile = function() {
+				MISSILE.x = PLAYER.x;
+				MISSILE.y = PLAYER.y - 10;
+				MISSILE.fired = 1;
+				MISSILE.draw();
+			};
+
+			//var PLAYER = createEntity("resources/jet_sprite.png", 60, 60, (CANVAS.width / 2), CANVAS.height, 5); 
+			var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
+			var PLAYERTWO = new Player((CANVAS.width / 2), CANVAS.height - 10);
+			var MISSILE = new Missile((CANVAS.width / 2), CANVAS.height);
+			var MISSILES = [];
+
+			window.onload = function() {
+				init();
+			}
+
+			/*
+			PLAYER.image.onload = function() {
+				PLAYER.draw();
+			}
+			*/
+
+			function init() {
+				window.requestAnimationFrame(frame);
+				CONTEXT.fillText("FPS:", 2, 25);
+			}
+			
+			function frame() {
+				NOW = timestamp();
+				DT = NOW - LAST;
+				LAST = NOW;
+				update(DT);
+				render(DT);
+				window.requestAnimationFrame(frame);
+			}
+
+			function timestamp() {
+				return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
+			}
+
+			function update() {
+				document.getElementById("debug").innerHTML = Keys.DOWN + ", " + Keys.LEFT;
+			 	FPS_COUNT += DT;
+
+				CONTEXT.clearRect(PLAYER.x, PLAYER.y, PLAYER.width, PLAYER.height); 
+
+				if (Boolean(MISSILE.fired)) {
+					CONTEXT.clearRect(MISSILE.x, MISSILE.y, MISSILE.width, MISSILE.height); 
+				}
+
+				if(FPS_COUNT >= 1000) {
+					CONTEXT.clearRect(2, 0, 120, 30);
+					CONTEXT.fillText("FPS: " + TOTAL_FRAMES, 2,25);
+					TOTAL_FRAMES = 0;
+					FPS_COUNT = 0;
+				}
+
+				if (MISSILE.y < 0) {
+					//alert("BOOM");
+				}	
+
+				move();
+			}
+
+			function render(DT) {
+				COUNT += DT;
+
+				if ((COUNT >= 0.06) && (TOTAL_FRAMES != 60)) {
+					PLAYER.draw();
+					if (Boolean(MISSILE.fired)) {
+						MISSILE.draw();
+					}
+
+					COUNT = 0;
+					TOTAL_FRAMES += 1;
+				}
+
+				DT = 0;
+
+
+			}
+
+			function move() {
+				switch (Boolean(Keys)) {
+					case Keys.UP && Keys.LEFT: // Northeast 
+						if ((isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed))) && (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))) {
+							PLAYER.y -= PLAYER.speed;
+							PLAYER.x -= PLAYER.speed;
+						}
+					break;
+					case Keys.UP && Keys.RIGHT: // Northwest
+						if ((isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed))) && (isInsideBounds((PLAYER.x + PLAYER.speed), PLAYER.y))) {
+							PLAYER.y -= PLAYER.speed;
+							PLAYER.x += PLAYER.speed;
+						}
+					break;
+					case Keys.DOWN && Keys.LEFT: // Southeast 
+						if ((isInsideBounds(PLAYER.x, (PLAYER.y + PLAYER.speed))) && (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))) { 
+							PLAYER.y += PLAYER.speed;
+							PLAYER.x -= PLAYER.speed;
+						}
+					break;
+					case Keys.DOWN && Keys.RIGHT: // Southwest 
+						if ((isInsideBounds(PLAYER.x, (PLAYER.y + PLAYER.speed))) && (isInsideBounds((PLAYER.x + PLAYER.speed), PLAYER.y))) { 
+							PLAYER.y += PLAYER.speed;
+							PLAYER.x += PLAYER.speed;
+						}
+					break;
+					case Keys.UP: // North 
+						if (isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed)))
+							PLAYER.y -= PLAYER.speed;
+					break;
+					case Keys.LEFT: // East 
+						if (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))
+							PLAYER.x -= PLAYER.speed;
+					break;
+					case Keys.RIGHT: // West 
+						if (isInsideBounds((PLAYER.x + PLAYER.speed), PLAYER.y))
+							PLAYER.x += PLAYER.speed;
+					break;
+					case Keys.DOWN: // South 
+						if (isInsideBounds(PLAYER.x, (PLAYER.y + PLAYER.speed)))
+							PLAYER.y += PLAYER.speed;
+					break;
+				}
+				if (Boolean(MISSILE.fired)) {
+					MISSILE.y -= 10;
+				}
+			}
+
+			function isInsideBounds(x, y) {
+				if (y > (CANVAS.height - PLAYER.height)) { // prevent down
+					return 0;
+				} else if (x < 0) {
+					return 0;
+				} else if (x > (CANVAS.width - PLAYER.width)) {
+					return 0;
+				} else if (y < 0) {
+					return 0;
+				} else {
+					return 1;
+				}
+			}
+
+		</script>
+	</body> 
+</html>
