@@ -55,24 +55,24 @@ function update(gFrameDuration) {
 	}
 
 
-	if (Boolean(PLAYER.alive)) {
+	if (Boolean(gPlayer.alive)) {
 		for (let i = 0; i < gEnemy_jets.length; i++) {
-			if (collision(PLAYER.x, PLAYER.y, gEnemy_jets[i].x, gEnemy_jets[i].y, PLAYER.image.width, PLAYER.image.height, gEnemy_jets[i].image.width, gEnemy_jets[i].image.height)) {
+			if (collision(gPlayer.x, gPlayer.y, gEnemy_jets[i].x, gEnemy_jets[i].y, gPlayer.image.width, gPlayer.image.height, gEnemy_jets[i].image.width, gEnemy_jets[i].image.height)) {
 				var explosion = new Explosion(gEnemy_jets[i].x, gEnemy_jets[i].y);
 				explosion.startTime = gTimer;
 				gExplosions.push(explosion);
 
-				var secondExplosion = new Explosion(PLAYER.x, PLAYER.y);
+				var secondExplosion = new Explosion(gPlayer.x, gPlayer.y);
 				secondExplosion.startTime = gTimer;
 				gExplosions.push(secondExplosion);
 				gEnemy_jets.splice(i, 1);
-				PLAYER.alive = 0;
+				gPlayer.alive = 0;
 			}
 		}
 	}
 
-	if (PLAYER.ammoRockets == 0) {
-		PLAYER.reload();
+	if (gPlayer.ammoRockets == 0) {
+		gPlayer.reload();
 	}
 
 	for (let i = 0; i < gExplosions.length; i++) {
@@ -90,7 +90,7 @@ function render() {
 	if (gTotal_frames > 45)
 		console.log(gTotal_frames);
 
-	//CONTEXT.fillRect(0, 0, CANVAS.width, CANVAS.height);
+	//gContext.fillRect(0, 0, gCanvas.width, gCanvas.height);
 	for (let i = 0; i < gBoats.length; i++) {
 		gBoats[i].draw();
 	}
@@ -103,29 +103,29 @@ function render() {
 	for (let i = 0; i < gExplosions.length; i++) {
 		gExplosions[i].draw();
 	}
-	CONTEXT.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
-	if (Boolean(PLAYER.alive)) {
-		PLAYER.draw();
+	gContext.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
+	if (Boolean(gPlayer.alive)) {
+		gPlayer.draw();
 		//console.log("Player DRAWN");
 	}
 
 
-	if (PLAYER.ammoRockets != 0) {
-		for (let i = 0; i < PLAYER.ammoRockets; i++) {
-			CONTEXT.drawImage(gReload_icon, i * gReload_icon.width / 3, CANVAS.height - gReload_icon.height / 3, gReload_icon.width / 3, gReload_icon.height / 3);
+	if (gPlayer.ammoRockets != 0) {
+		for (let i = 0; i < gPlayer.ammoRockets; i++) {
+			gContext.drawImage(gReload_icon, i * gReload_icon.width / 3, gCanvas.height - gReload_icon.height / 3, gReload_icon.width / 3, gReload_icon.height / 3);
 		}
-		//CONTEXT.fillText(PLAYER.ammoRockets, gReload_icon.width / 3, CANVAS.height - 4);
+		//gContext.fillText(gPlayer.ammoRockets, gReload_icon.width / 3, gCanvas.height - 4);
 	} 
 
 	COUNT = 0;
 
-	if (!Boolean(PLAYER.alive)) {
+	if (!Boolean(gPlayer.alive)) {
 		drawMenu();
 	}
 
 
 	gTotal_frames += 1;
-	CONTEXT.fillText(Math.floor(gTimer / 1000), CANVAS.width - 38, 25);
+	gContext.fillText(Math.floor(gTimer / 1000), gCanvas.width - 38, 25);
 }
 
 var gTimer_fps = 0;
@@ -137,7 +137,7 @@ function calculateFps () {
 	}
 
 	if(gTimer_fps > 1000) {
-		CONTEXT.fillText("FPS: " + gTotal_frames, 2,25);
+		gContext.fillText("FPS: " + gTotal_frames, 2,25);
 		TEMP_TOTAL_FRAMERATE = gTotal_frames;
 		gTotal_frames = 0;
 		gTimer_fps = 0;

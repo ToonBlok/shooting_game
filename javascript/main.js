@@ -1,16 +1,19 @@
-const CANVAS = document.getElementById('screen');
-const CONTEXT = CANVAS.getContext('2d');
-CONTEXT.font = "30px Arial";
-CONTEXT.fillStyle = "white";
+const gCanvas = document.getElementById('screen');
+const gContext = gCanvas.getContext('2d');
+gContext.font = "30px Arial";
+gContext.fillStyle = "white";
 
-var PLAYER = new Player((CANVAS.width / 2), CANVAS.height);
+var gGame = {
+
+};
+
+var gPlayer = new Player((gCanvas.width / 2), gCanvas.height);
 var gTile_water = new Image();
-gTile_water.src = "resources/tile_water.png";
+gTile_water.src = "img/tile_water.png";
 var gTile_water_flipped = new Image();
-gTile_water_flipped.src = "resources/tile_water_flipped.png";
+gTile_water_flipped.src = "img/tile_water_flipped.png";
 var gReload_icon = new Image();
-gReload_icon.src = "resources/ammo_icon.png";
-let ALTERNATE_MISSILE_WING = 0;
+gReload_icon.src = "img/ammo_icon.png";
 
 var MISSILES = [];
 var gEnemy_jets = [];
@@ -24,41 +27,40 @@ var RELOAD_DURATION = 2000;
 var enemySpawnInterval = 2000;
 var missileDrawDelay = 500;
 var TEMP_TOTAL_FRAMERATE = 0;
-var FPS = 60;
 
 // ## Classes ##
 // these are constructor functions and classes (not object literals) 
 // JS's version of a class
 function Player(initialX, initialY) { 
 	this.image = new Image(); 
-	this.image.src = "resources/sprite_jet_player.png";
+	this.image.src = "img/sprite_jet_player.png";
 	this.image.width = 60;
 	this.image.height = 60;
 	this.x = initialX;
 	this.y = initialY - this.image.height;
 	this.speed = 5;
-	//this.score = 0;
 	this.alive = 1;
 	this.maxRockets = 6;
 	this.ammoRockets = this.maxRockets;
+	this.rocketPodReady = 0;
 
 	this.draw = function() {
-		CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
+		gContext.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
 	}
 	this.fireMissile = function() {
-		if (PLAYER.ammoRockets > 0) {
-			let middleOfJet = PLAYER.x + (PLAYER.image.width / 2);
-			var missile = new Missile(PLAYER.y + 47);
-			if (ALTERNATE_MISSILE_WING == 0) { // left
+		if (gPlayer.ammoRockets > 0) {
+			let middleOfJet = gPlayer.x + (gPlayer.image.width / 2);
+			var missile = new Missile(gPlayer.y + 47);
+			if (gPlayer.rocketPodReady == 0) { // left
 				missile.x = middleOfJet - 25;
-				ALTERNATE_MISSILE_WING = 1;
-			} else if (ALTERNATE_MISSILE_WING == 1) { // right
+				gPlayer.rocketPodReady = 1;
+			} else if (gPlayer.rocketPodReady == 1) { // right
 				missile.x = ((middleOfJet + 25) - missile.image.width);
-				ALTERNATE_MISSILE_WING = 0;
+				gPlayer.rocketPodReady = 0;
 			}
 
 			MISSILES.push(missile);
-			PLAYER.ammoRockets -= 1;
+			gPlayer.ammoRockets -= 1;
 		}
 	}
 	this.reload = function() {
@@ -67,7 +69,7 @@ function Player(initialX, initialY) {
 			RELOADING = 1;
 		}
 		if (gTimer > (TIMER_STARTING_TIME + RELOAD_DURATION)) {
-			PLAYER.ammoRockets = PLAYER.maxRockets;
+			gPlayer.ammoRockets = gPlayer.maxRockets;
 			TIMER_STARTING_TIME = 0;
 			RELOADING = 0;
 		}
@@ -76,8 +78,8 @@ function Player(initialX, initialY) {
 
 function Missile(initialY) {
 	this.image = new Image(); 
-	this.image.src = "resources/sprite_missile2.png";
-	//this.image.src = "resources/spritesheet_missile4.png";
+	this.image.src = "img/sprite_missile2.png";
+	//this.image.src = "img/spritesheet_missile4.png";
 	//this.image.width = 204;
 	//this.image.height = 213;
 	this.image.width = 7;
@@ -92,32 +94,32 @@ function Missile(initialY) {
 
 function EnemyJet(initialX, initialY) {
 	this.image = new Image(); 
-	this.image.src = "resources/sprite_jet_enemy.png";
+	this.image.src = "img/sprite_jet_enemy.png";
 	this.image.width = 60;
 	this.image.height = 60;
 	this.x = initialX;
 	this.y = initialY - this.image.height;
 	this.speed = 3;
-	//this.enemyWaypoints = [[CANVAS.width / 2, CANVAS.height / 2], [42, 42]];
+	//this.enemyWaypoints = [[gCanvas.width / 2, gCanvas.height / 2], [42, 42]];
 	this.waypoints = [];
 }
 
 function NeutralBoat(initialX, initialY) {
 	this.image = new Image(); 
-	this.image.src = "resources/neutral_ship.png";
+	this.image.src = "img/neutral_ship.png";
 	this.image.width = 40;
 	this.image.height = 130;
 	this.x = initialX;
 	this.y = initialY;
 	this.speed = 0.5;
-	//this.enemyWaypoints = [[CANVAS.width / 2, CANVAS.height / 2], [42, 42]];
+	//this.enemyWaypoints = [[gCanvas.width / 2, gCanvas.height / 2], [42, 42]];
 	this.waypoints = [];
 }
 
 function Explosion(initialX, initialY) {
 	this.image = new Image(); 
-	//this.image.src = "resources/sprite_explosion.png";
-	this.image.src = "resources/spritesheet_explosions.png";
+	//this.image.src = "img/sprite_explosion.png";
+	this.image.src = "img/spritesheet_explosions.png";
 	this.width = 64;
 	this.height = 64;
 	this.x = initialX;
@@ -130,7 +132,7 @@ function Explosion(initialX, initialY) {
 }
 
 NeutralBoat.prototype.draw = function() {
-	CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
+	gContext.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
 };
 
 //EnemyJet.prototype.getWayPoints = function() {
@@ -138,9 +140,9 @@ NeutralBoat.prototype.draw = function() {
 //};
 
 Missile.prototype.draw = function() {
-	CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
+	gContext.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
 	//alert(this.x + ", " + this.y);
-	//CONTEXT.drawImage(this.image, this.tickCount * 204, 0, this.image.width, this.image.height, this.x, this.y, 50, 50);
+	//gContext.drawImage(this.image, this.tickCount * 204, 0, this.image.width, this.image.height, this.x, this.y, 50, 50);
 };
 
 Missile.prototype.update = function() {
@@ -152,11 +154,11 @@ Missile.prototype.update = function() {
 };
 
 EnemyJet.prototype.draw = function() {
-	CONTEXT.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
+	gContext.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
 };
 
 Explosion.prototype.draw = function() {
-	CONTEXT.drawImage(this.image, this.tickCount * 64, 0, this.width, this.height, this.x, this.y, this.width, this.height);
+	gContext.drawImage(this.image, this.tickCount * 64, 0, this.width, this.height, this.x, this.y, this.width, this.height);
 };
 
 Explosion.prototype.update = function() {
@@ -179,7 +181,7 @@ var Keys = {
 };
 
 window.onkeydown = function(e) {
-	if (Boolean(PLAYER.alive)) {
+	if (Boolean(gPlayer.alive)) {
 		switch (e.keyCode) {
 			case 87: 
 				Keys.UP = true;
@@ -194,16 +196,16 @@ window.onkeydown = function(e) {
 				Keys.DOWN = true;
 			break;
 			case 32:
-				PLAYER.fireMissile();
+				gPlayer.fireMissile();
 			break;
 			case 73:
-				alert("Player.x = " + PLAYER.x + ", Player.Y = " + PLAYER.y);
+				alert("Player.x = " + gPlayer.x + ", Player.Y = " + gPlayer.y);
 			break;
 		}
 	}
 }
 window.onkeyup = function(e) {
-	if (Boolean(PLAYER.alive)) {
+	if (Boolean(gPlayer.alive)) {
 		switch (e.keyCode) {
 			case 87: 
 				Keys.UP = false;
@@ -230,13 +232,13 @@ function init() {
 
 function drawTileArray() {
 	let tileSize = 50; // size 15 costs 30 frames, 50 cost no performance it seems
-	let maxHorizontalTiles = CANVAS.width / tileSize;
-	let maxVerticalTiles = CANVAS.height / tileSize;
+	let maxHorizontalTiles = gCanvas.width / tileSize;
+	let maxVerticalTiles = gCanvas.height / tileSize;
 	let maxTiles = maxVerticalTiles * maxHorizontalTiles;
 
 	for (let i = 0; i < maxVerticalTiles; i++) {
 		for (let a = 0; a < maxHorizontalTiles; a++) {
-			CONTEXT.drawImage(gTile_water_flipped, (a * tileSize), (i * tileSize), tileSize, tileSize);
+			gContext.drawImage(gTile_water_flipped, (a * tileSize), (i * tileSize), tileSize, tileSize);
 		}
 	}
 }
@@ -246,10 +248,10 @@ var gSpawn_interval = 5000;
 function updateEnemies (frameDuration) {
 	for (let i = 0; i < gEnemy_jets.length; i++) {
 		if (gEnemy_jets[i].waypoints != 5) {
-			gEnemy_jets[i].waypoints.push([Math.floor(Math.random() * CANVAS.width), Math.floor(Math.random() * CANVAS.height / 2)]);
+			gEnemy_jets[i].waypoints.push([Math.floor(Math.random() * gCanvas.width), Math.floor(Math.random() * gCanvas.height / 2)]);
 
 		}
-		if (gEnemy_jets[i].y > CANVAS.height) {
+		if (gEnemy_jets[i].y > gCanvas.height) {
 			gEnemy_jets.splice(i, 1);
 		}
 	}
@@ -311,17 +313,17 @@ function updateEnemies (frameDuration) {
 
 
 	if (gTimer > 1000 && gEnemy_jets < 1) {
-	  	var enemy_jet = new EnemyJet((CANVAS.width / 2), CANVAS.height);
-	  	var randomSpawnX = Math.floor(Math.random() * (CANVAS.width / 100));
+	  	var enemy_jet = new EnemyJet((gCanvas.width / 2), gCanvas.height);
+	  	var randomSpawnX = Math.floor(Math.random() * (gCanvas.width / 100));
 	  	enemy_jet.x = randomSpawnX * 100;
 	  	enemy_jet.y = -100;
 	  	gEnemy_jets.push(enemy_jet);
 	}
 	if (gBoats < 1) {
-	  	var boat = new NeutralBoat((CANVAS.width / 2), CANVAS.height);
-	  	var randomSpawnX = Math.floor(Math.random() * (CANVAS.width / 100));
+	  	var boat = new NeutralBoat((gCanvas.width / 2), gCanvas.height);
+	  	var randomSpawnX = Math.floor(Math.random() * (gCanvas.width / 100));
 	  	boat.x = randomSpawnX * 100;
-	  	boat.y = CANVAS.height;
+	  	boat.y = gCanvas.height;
 	  	gBoats.push(boat);
 	}
 //	console.log(frameDuration);
@@ -332,8 +334,8 @@ function updateEnemies (frameDuration) {
 //	}	
 //
 //	if (gTimer_enemies > gSpawn_interval) {
-//		var enemy_jet = new EnemyJet((CANVAS.width / 2), CANVAS.height);
-//		var randomSpawnX = Math.floor(Math.random() * (CANVAS.width / 100));
+//		var enemy_jet = new EnemyJet((gCanvas.width / 2), gCanvas.height);
+//		var randomSpawnX = Math.floor(Math.random() * (gCanvas.width / 100));
 //		enemy_jet.x = randomSpawnX * 100;
 //		enemy_jet.y = -100;
 //		gEnemy_jets.push(enemy_jet);
@@ -362,59 +364,59 @@ function collision (entityOneX, entityOneY, entityTwoX, entityTwoY, entityOneWid
 function drawMenu() {
 	let menuSizeX = 500;
 	let menuSizeY = 300;
-	let menuPosX = ((CANVAS.width / 2) - (menuSizeX / 2));
-	let menuPosY = ((CANVAS.height / 2) - (menuSizeY / 2));
-	CONTEXT.strokeStyle = "white";
-	CONTEXT.strokeRect(menuPosX, menuPosY, menuSizeX, menuSizeY);
-	CONTEXT.stroke();
+	let menuPosX = ((gCanvas.width / 2) - (menuSizeX / 2));
+	let menuPosY = ((gCanvas.height / 2) - (menuSizeY / 2));
+	gContext.strokeStyle = "white";
+	gContext.strokeRect(menuPosX, menuPosY, menuSizeX, menuSizeY);
+	gContext.stroke();
 
-	CONTEXT.font = "123px Arial";
-	CONTEXT.fillText("You died", menuPosX + 10, menuPosY + (menuSizeY / 2) + 35);
-	CONTEXT.font = "30px Arial";
+	gContext.font = "123px Arial";
+	gContext.fillText("You died", menuPosX + 10, menuPosY + (menuSizeY / 2) + 35);
+	gContext.font = "30px Arial";
 }
 
 function move() {
 
 	switch (Boolean(Keys)) {
 		case Keys.UP && Keys.LEFT: // Northeast 
-			if ((isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed))) && (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))) {
-				PLAYER.y -= PLAYER.speed;
-				PLAYER.x -= PLAYER.speed;
+			if ((isInsideBounds(gPlayer.x, (gPlayer.y - gPlayer.speed))) && (isInsideBounds((gPlayer.x - gPlayer.speed), gPlayer.y))) {
+				gPlayer.y -= gPlayer.speed;
+				gPlayer.x -= gPlayer.speed;
 			}
 		break;
 		case Keys.UP && Keys.RIGHT: // Northwest
-			if ((isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed))) && (isInsideBounds((PLAYER.x + PLAYER.speed), PLAYER.y))) {
-				PLAYER.y -= PLAYER.speed;
-				PLAYER.x += PLAYER.speed;
+			if ((isInsideBounds(gPlayer.x, (gPlayer.y - gPlayer.speed))) && (isInsideBounds((gPlayer.x + gPlayer.speed), gPlayer.y))) {
+				gPlayer.y -= gPlayer.speed;
+				gPlayer.x += gPlayer.speed;
 			}
 		break;
 		case Keys.DOWN && Keys.LEFT: // Southeast 
-			if ((isInsideBounds(PLAYER.x, (PLAYER.y + PLAYER.speed))) && (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))) { 
-				PLAYER.y += PLAYER.speed;
-				PLAYER.x -= PLAYER.speed;
+			if ((isInsideBounds(gPlayer.x, (gPlayer.y + gPlayer.speed))) && (isInsideBounds((gPlayer.x - gPlayer.speed), gPlayer.y))) { 
+				gPlayer.y += gPlayer.speed;
+				gPlayer.x -= gPlayer.speed;
 			}
 		break;
 		case Keys.DOWN && Keys.RIGHT: // Southwest 
-			if ((isInsideBounds(PLAYER.x, (PLAYER.y + PLAYER.speed))) && (isInsideBounds((PLAYER.x + PLAYER.speed), PLAYER.y))) { 
-				PLAYER.y += PLAYER.speed;
-				PLAYER.x += PLAYER.speed;
+			if ((isInsideBounds(gPlayer.x, (gPlayer.y + gPlayer.speed))) && (isInsideBounds((gPlayer.x + gPlayer.speed), gPlayer.y))) { 
+				gPlayer.y += gPlayer.speed;
+				gPlayer.x += gPlayer.speed;
 			}
 		break;
 		case Keys.UP: // North 
-			if (isInsideBounds(PLAYER.x, (PLAYER.y - PLAYER.speed)))
-				PLAYER.y -= PLAYER.speed;
+			if (isInsideBounds(gPlayer.x, (gPlayer.y - gPlayer.speed)))
+				gPlayer.y -= gPlayer.speed;
 		break;
 		case Keys.LEFT: // East 
-			if (isInsideBounds((PLAYER.x - PLAYER.speed), PLAYER.y))
-				PLAYER.x -= PLAYER.speed;
+			if (isInsideBounds((gPlayer.x - gPlayer.speed), gPlayer.y))
+				gPlayer.x -= gPlayer.speed;
 		break;
 		case Keys.RIGHT: // West 
-			if (isInsideBounds((PLAYER.x + PLAYER.speed), PLAYER.y))
-				PLAYER.x += PLAYER.speed;
+			if (isInsideBounds((gPlayer.x + gPlayer.speed), gPlayer.y))
+				gPlayer.x += gPlayer.speed;
 		break;
 		case Keys.DOWN: // South 
-			if (isInsideBounds(PLAYER.x, (PLAYER.y + PLAYER.speed)))
-				PLAYER.y += PLAYER.speed;
+			if (isInsideBounds(gPlayer.x, (gPlayer.y + gPlayer.speed)))
+				gPlayer.y += gPlayer.speed;
 		break;
 	}
 
@@ -424,11 +426,11 @@ function move() {
 }
 
 function isInsideBounds(x, y) {
-	if (y > (CANVAS.height - PLAYER.image.height)) { // prevent down
+	if (y > (gCanvas.height - gPlayer.image.height)) { // prevent down
 		return 0;
 	} else if (x < 0) {
 		return 0;
-	} else if (x > (CANVAS.width - PLAYER.image.width)) {
+	} else if (x > (gCanvas.width - gPlayer.image.width)) {
 		return 0;
 	} else if (y < 0) {
 		return 0;
@@ -440,5 +442,5 @@ function isInsideBounds(x, y) {
 /*
    Player has a prototype object from which it inherits stuff
    When instantiating from this class, a link is created to the original Player constructor class
-   Player is a prototype, the PLAYER var below inherits from the prototypeaPlayer has a prototype object from which it inherits stuffPlayer has a prototype object from which it inherits stuff
+   Player is a prototype, the gPlayer var below inherits from the prototypeaPlayer has a prototype object from which it inherits stuffPlayer has a prototype object from which it inherits stuff
 */
