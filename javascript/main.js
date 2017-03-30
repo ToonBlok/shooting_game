@@ -3,7 +3,8 @@ const gContext = gCanvas.getContext('2d');
 gContext.font = "30px Arial";
 gContext.fillStyle = "white";
 
-var gGame = {
+// Game namespace
+var game = {
 
 };
 
@@ -243,45 +244,57 @@ function drawTileArray() {
 	}
 }
 
+function outOfBounds(x, y) {
+	if (y > gCanvas.height ||
+		y < 0 ||
+		x < 0 ||
+		x > gCanvas.width) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 var gTimer_enemies = 0;
 var gSpawn_interval = 5000;
 function updateEnemies (frameDuration) {
 	for (let i = 0; i < gEnemy_jets.length; i++) {
-		if (gEnemy_jets[i].waypoints != 5) {
+		if (gEnemy_jets[i].waypoints == 0) {
 			gEnemy_jets[i].waypoints.push([Math.floor(Math.random() * gCanvas.width), Math.floor(Math.random() * gCanvas.height / 2)]);
 
 		}
-		if (gEnemy_jets[i].y > gCanvas.height) {
+		if (Boolean(outOfBounds(gEnemy_jets[i].x, gEnemy_jets[i].y))) {
 			gEnemy_jets.splice(i, 1);
 		}
 	}
 
 	for (let i = 0; i < gEnemy_jets.length; i++) {
 		//document.getElementById("debug").innerHTML = gEnemy_jets[0].waypoints[0][0] + ", " + gEnemy_jets[0].waypoints[0][1];
-		if(gEnemy_jets[i].x > gEnemy_jets[i].waypoints[0][0]) {
-			if (gEnemy_jets[i].x - gEnemy_jets[i].speed < gEnemy_jets[i].waypoints[0][0]) {
-				gEnemy_jets[i].x = gEnemy_jets[i].waypoints[0][0];
+		let waypointX = gEnemy_jets[i].waypoints[0][0];
+		let waypointY = gEnemy_jets[i].waypoints[0][1];
+		if(gEnemy_jets[i].x > waypointX) {
+			if (gEnemy_jets[i].x - gEnemy_jets[i].speed < waypointX) {
+				gEnemy_jets[i].x = waypointX;
 			} else {
 				gEnemy_jets[i].x -= gEnemy_jets[i].speed;
 			}
-		} else if(gEnemy_jets[i].x < gEnemy_jets[i].waypoints[0][0]) {
-			if (gEnemy_jets[i].x + gEnemy_jets[i].speed > gEnemy_jets[i].waypoints[0][0]) {
-				gEnemy_jets[i].x = gEnemy_jets[i].waypoints[0][0];
+		} else if(gEnemy_jets[i].x < waypointX) {
+			if (gEnemy_jets[i].x + gEnemy_jets[i].speed > waypointX) {
+				gEnemy_jets[i].x = waypointX; 
 			} else {
 				gEnemy_jets[i].x += gEnemy_jets[i].speed;
 			}
 		}
-		if(gEnemy_jets[i].y < gEnemy_jets[i].waypoints[0][1]) {
-			if (gEnemy_jets[i].y + gEnemy_jets[i].speed > gEnemy_jets[i].waypoints[0][1]) { // DOWN 
-				gEnemy_jets[i].y = gEnemy_jets[i].waypoints[0][1];
+		if(gEnemy_jets[i].y < waypointY) {
+			if (gEnemy_jets[i].y + gEnemy_jets[i].speed > waypointY) { // DOWN 
+				gEnemy_jets[i].y = waypointY;
 				//alert("ok");
 			} else {
 				gEnemy_jets[i].y += gEnemy_jets[i].speed;
 			}
-		} else if(gEnemy_jets[i].y > gEnemy_jets[i].waypoints[0][1]) {                      // UP 
-			if (gEnemy_jets[i].y - gEnemy_jets[i].speed < gEnemy_jets[i].waypoints[0][1]) {
-				gEnemy_jets[i].y = gEnemy_jets[i].waypoints[0][1];
-
+		} else if(gEnemy_jets[i].y > waypointY) {                      // UP 
+			if (gEnemy_jets[i].y - gEnemy_jets[i].speed < waypointY) {
+				gEnemy_jets[i].y = waypointY;
 			} else {
 				gEnemy_jets[i].y -= gEnemy_jets[i].speed;
 			}
@@ -316,9 +329,11 @@ function updateEnemies (frameDuration) {
 	  	var enemy_jet = new EnemyJet((gCanvas.width / 2), gCanvas.height);
 	  	var randomSpawnX = Math.floor(Math.random() * (gCanvas.width / 100));
 	  	enemy_jet.x = randomSpawnX * 100;
-	  	enemy_jet.y = -100;
+	  	enemy_jet.y = 10;
 	  	gEnemy_jets.push(enemy_jet);
 	}
+	//alert(gBoats.length);
+	//console.log(gBoats.length);
 	if (gBoats < 1) {
 	  	var boat = new NeutralBoat((gCanvas.width / 2), gCanvas.height);
 	  	var randomSpawnX = Math.floor(Math.random() * (gCanvas.width / 100));

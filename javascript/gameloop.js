@@ -88,7 +88,7 @@ function update(gFrameDuration) {
 function render() {
 	drawTileArray();
 	if (gTotal_frames > 45)
-		console.log(gTotal_frames);
+		//console.log(gTotal_frames);
 
 	//gContext.fillRect(0, 0, gCanvas.width, gCanvas.height);
 	for (let i = 0; i < gBoats.length; i++) {
