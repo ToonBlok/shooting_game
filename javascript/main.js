@@ -6,6 +6,7 @@ gContext.fillStyle = "white";
 // Game namespace
 var game = {
 	player: new Player((gCanvas.width / 2), gCanvas.height),
+	// test
 
 	tile_water: new Image(),
 	reload_icon: new Image(),
