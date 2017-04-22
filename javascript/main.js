@@ -5,16 +5,28 @@ gContext.fillStyle = "white";
 
 // Game namespace
 var game = {
+	player: new Player((gCanvas.width / 2), gCanvas.height),
 
+	tile_water: new Image(),
+	reload_icon: new Image(),
+
+	test: function() {
+		this.tile_water.src = "img/tile_water.png";
+		this.reload_icon.src = "img/ammo_icon.png";
+	},
+
+	sword: function() {
+		this.slash = function(){
+			alert("attacked");
+		}
+	}
+
+	
 };
 
-var gPlayer = new Player((gCanvas.width / 2), gCanvas.height);
-var gTile_water = new Image();
-gTile_water.src = "img/tile_water.png";
-var gTile_water_flipped = new Image();
-gTile_water_flipped.src = "img/tile_water_flipped.png";
-var gReload_icon = new Image();
-gReload_icon.src = "img/ammo_icon.png";
+game.test();
+var abc = new game.sword();
+
 
 var MISSILES = [];
 var gEnemy_jets = [];
@@ -49,19 +61,19 @@ function Player(initialX, initialY) {
 		gContext.drawImage(this.image, this.x, this.y, this.image.width, this.image.height);
 	}
 	this.fireMissile = function() {
-		if (gPlayer.ammoRockets > 0) {
-			let middleOfJet = gPlayer.x + (gPlayer.image.width / 2);
-			var missile = new Missile(gPlayer.y + 47);
-			if (gPlayer.rocketPodReady == 0) { // left
+		if (game.player.ammoRockets > 0) {
+			let middleOfJet = game.player.x + (game.player.image.width / 2);
+			var missile = new Missile(game.player.y + 47);
+			if (game.player.rocketPodReady == 0) { // left
 				missile.x = middleOfJet - 25;
-				gPlayer.rocketPodReady = 1;
-			} else if (gPlayer.rocketPodReady == 1) { // right
+				game.player.rocketPodReady = 1;
+			} else if (game.player.rocketPodReady == 1) { // right
 				missile.x = ((middleOfJet + 25) - missile.image.width);
-				gPlayer.rocketPodReady = 0;
+				game.player.rocketPodReady = 0;
 			}
 
 			MISSILES.push(missile);
-			gPlayer.ammoRockets -= 1;
+			game.player.ammoRockets -= 1;
 		}
 	}
 	this.reload = function() {
@@ -70,7 +82,7 @@ function Player(initialX, initialY) {
 			RELOADING = 1;
 		}
 		if (gTimer > (TIMER_STARTING_TIME + RELOAD_DURATION)) {
-			gPlayer.ammoRockets = gPlayer.maxRockets;
+			game.player.ammoRockets = game.player.maxRockets;
 			TIMER_STARTING_TIME = 0;
 			RELOADING = 0;
 		}
@@ -182,7 +194,7 @@ var Keys = {
 };
 
 window.onkeydown = function(e) {
-	if (Boolean(gPlayer.alive)) {
+	if (Boolean(game.player.alive)) {
 		switch (e.keyCode) {
 			case 87: 
 				Keys.UP = true;
@@ -197,16 +209,16 @@ window.onkeydown = function(e) {
 				Keys.DOWN = true;
 			break;
 			case 32:
-				gPlayer.fireMissile();
+				game.player.fireMissile();
 			break;
 			case 73:
-				alert("Player.x = " + gPlayer.x + ", Player.Y = " + gPlayer.y);
+				alert("Player.x = " + game.player.x + ", Player.Y = " + game.player.y);
 			break;
 		}
 	}
 }
 window.onkeyup = function(e) {
-	if (Boolean(gPlayer.alive)) {
+	if (Boolean(game.player.alive)) {
 		switch (e.keyCode) {
 			case 87: 
 				Keys.UP = false;
@@ -239,7 +251,7 @@ function drawTileArray() {
 
 	for (let i = 0; i < maxVerticalTiles; i++) {
 		for (let a = 0; a < maxHorizontalTiles; a++) {
-			gContext.drawImage(gTile_water_flipped, (a * tileSize), (i * tileSize), tileSize, tileSize);
+			gContext.drawImage(game.tile_water, (a * tileSize), (i * tileSize), tileSize, tileSize);
 		}
 	}
 }
@@ -394,44 +406,44 @@ function move() {
 
 	switch (Boolean(Keys)) {
 		case Keys.UP && Keys.LEFT: // Northeast 
-			if ((isInsideBounds(gPlayer.x, (gPlayer.y - gPlayer.speed))) && (isInsideBounds((gPlayer.x - gPlayer.speed), gPlayer.y))) {
-				gPlayer.y -= gPlayer.speed;
-				gPlayer.x -= gPlayer.speed;
+			if ((isInsideBounds(game.player.x, (game.player.y - game.player.speed))) && (isInsideBounds((game.player.x - game.player.speed), game.player.y))) {
+				game.player.y -= game.player.speed;
+				game.player.x -= game.player.speed;
 			}
 		break;
 		case Keys.UP && Keys.RIGHT: // Northwest
-			if ((isInsideBounds(gPlayer.x, (gPlayer.y - gPlayer.speed))) && (isInsideBounds((gPlayer.x + gPlayer.speed), gPlayer.y))) {
-				gPlayer.y -= gPlayer.speed;
-				gPlayer.x += gPlayer.speed;
+			if ((isInsideBounds(game.player.x, (game.player.y - game.player.speed))) && (isInsideBounds((game.player.x + game.player.speed), game.player.y))) {
+				game.player.y -= game.player.speed;
+				game.player.x += game.player.speed;
 			}
 		break;
 		case Keys.DOWN && Keys.LEFT: // Southeast 
-			if ((isInsideBounds(gPlayer.x, (gPlayer.y + gPlayer.speed))) && (isInsideBounds((gPlayer.x - gPlayer.speed), gPlayer.y))) { 
-				gPlayer.y += gPlayer.speed;
-				gPlayer.x -= gPlayer.speed;
+			if ((isInsideBounds(game.player.x, (game.player.y + game.player.speed))) && (isInsideBounds((game.player.x - game.player.speed), game.player.y))) { 
+				game.player.y += game.player.speed;
+				game.player.x -= game.player.speed;
 			}
 		break;
 		case Keys.DOWN && Keys.RIGHT: // Southwest 
-			if ((isInsideBounds(gPlayer.x, (gPlayer.y + gPlayer.speed))) && (isInsideBounds((gPlayer.x + gPlayer.speed), gPlayer.y))) { 
-				gPlayer.y += gPlayer.speed;
-				gPlayer.x += gPlayer.speed;
+			if ((isInsideBounds(game.player.x, (game.player.y + game.player.speed))) && (isInsideBounds((game.player.x + game.player.speed), game.player.y))) { 
+				game.player.y += game.player.speed;
+				game.player.x += game.player.speed;
 			}
 		break;
 		case Keys.UP: // North 
-			if (isInsideBounds(gPlayer.x, (gPlayer.y - gPlayer.speed)))
-				gPlayer.y -= gPlayer.speed;
+			if (isInsideBounds(game.player.x, (game.player.y - game.player.speed)))
+				game.player.y -= game.player.speed;
 		break;
 		case Keys.LEFT: // East 
-			if (isInsideBounds((gPlayer.x - gPlayer.speed), gPlayer.y))
-				gPlayer.x -= gPlayer.speed;
+			if (isInsideBounds((game.player.x - game.player.speed), game.player.y))
+				game.player.x -= game.player.speed;
 		break;
 		case Keys.RIGHT: // West 
-			if (isInsideBounds((gPlayer.x + gPlayer.speed), gPlayer.y))
-				gPlayer.x += gPlayer.speed;
+			if (isInsideBounds((game.player.x + game.player.speed), game.player.y))
+				game.player.x += game.player.speed;
 		break;
 		case Keys.DOWN: // South 
-			if (isInsideBounds(gPlayer.x, (gPlayer.y + gPlayer.speed)))
-				gPlayer.y += gPlayer.speed;
+			if (isInsideBounds(game.player.x, (game.player.y + game.player.speed)))
+				game.player.y += game.player.speed;
 		break;
 	}
 
@@ -441,11 +453,11 @@ function move() {
 }
 
 function isInsideBounds(x, y) {
-	if (y > (gCanvas.height - gPlayer.image.height)) { // prevent down
+	if (y > (gCanvas.height - game.player.image.height)) { // prevent down
 		return 0;
 	} else if (x < 0) {
 		return 0;
-	} else if (x > (gCanvas.width - gPlayer.image.width)) {
+	} else if (x > (gCanvas.width - game.player.image.width)) {
 		return 0;
 	} else if (y < 0) {
 		return 0;
@@ -457,5 +469,5 @@ function isInsideBounds(x, y) {
 /*
    Player has a prototype object from which it inherits stuff
    When instantiating from this class, a link is created to the original Player constructor class
-   Player is a prototype, the gPlayer var below inherits from the prototypeaPlayer has a prototype object from which it inherits stuffPlayer has a prototype object from which it inherits stuff
+   Player is a prototype, the player var below inherits from the prototypeaPlayer has a prototype object from which it inherits stuffPlayer has a prototype object from which it inherits stuff
 */

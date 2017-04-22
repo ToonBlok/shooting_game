@@ -1,6 +1,6 @@
 #!/bin/bash
 
 firefox index.html &
-vim -p javascript/main.js javascript/gameloop.js shooting_game.html
+vim -p javascript/main.js javascript/gameloop.js index.html
 
 

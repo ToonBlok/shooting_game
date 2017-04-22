@@ -55,24 +55,24 @@ function update(gFrameDuration) {
 	}
 
 
-	if (Boolean(gPlayer.alive)) {
+	if (Boolean(game.player.alive)) {
 		for (let i = 0; i < gEnemy_jets.length; i++) {
-			if (collision(gPlayer.x, gPlayer.y, gEnemy_jets[i].x, gEnemy_jets[i].y, gPlayer.image.width, gPlayer.image.height, gEnemy_jets[i].image.width, gEnemy_jets[i].image.height)) {
+			if (collision(game.player.x, game.player.y, gEnemy_jets[i].x, gEnemy_jets[i].y, game.player.image.width, game.player.image.height, gEnemy_jets[i].image.width, gEnemy_jets[i].image.height)) {
 				var explosion = new Explosion(gEnemy_jets[i].x, gEnemy_jets[i].y);
 				explosion.startTime = gTimer;
 				gExplosions.push(explosion);
 
-				var secondExplosion = new Explosion(gPlayer.x, gPlayer.y);
+				var secondExplosion = new Explosion(game.player.x, game.player.y);
 				secondExplosion.startTime = gTimer;
 				gExplosions.push(secondExplosion);
 				gEnemy_jets.splice(i, 1);
-				gPlayer.alive = 0;
+				game.player.alive = 0;
 			}
 		}
 	}
 
-	if (gPlayer.ammoRockets == 0) {
-		gPlayer.reload();
+	if (game.player.ammoRockets == 0) {
+		game.player.reload();
 	}
 
 	for (let i = 0; i < gExplosions.length; i++) {
@@ -92,7 +92,7 @@ function render() {
 
 	//gContext.fillRect(0, 0, gCanvas.width, gCanvas.height);
 	for (let i = 0; i < gBoats.length; i++) {
-		gBoats[i].draw();
+		//gBoats[i].draw();
 	}
 	for (let i = 0; i < MISSILES.length; i++) {
 		MISSILES[i].draw();
@@ -104,22 +104,22 @@ function render() {
 		gExplosions[i].draw();
 	}
 	gContext.fillText("FPS: " + TEMP_TOTAL_FRAMERATE, 2,25);
-	if (Boolean(gPlayer.alive)) {
-		gPlayer.draw();
+	if (Boolean(game.player.alive)) {
+		game.player.draw();
 		//console.log("Player DRAWN");
 	}
 
 
-	if (gPlayer.ammoRockets != 0) {
-		for (let i = 0; i < gPlayer.ammoRockets; i++) {
-			gContext.drawImage(gReload_icon, i * gReload_icon.width / 3, gCanvas.height - gReload_icon.height / 3, gReload_icon.width / 3, gReload_icon.height / 3);
+	if (game.player.ammoRockets != 0) {
+		for (let i = 0; i < game.player.ammoRockets; i++) {
+			gContext.drawImage(game.reload_icon, i * game.reload_icon.width / 3, gCanvas.height - game.reload_icon.height / 3, game.reload_icon.width / 3, game.reload_icon.height / 3);
 		}
-		//gContext.fillText(gPlayer.ammoRockets, gReload_icon.width / 3, gCanvas.height - 4);
+		//gContext.fillText(game.player.ammoRockets, game.reload_icon.width / 3, gCanvas.height - 4);
 	} 
 
 	COUNT = 0;
 
-	if (!Boolean(gPlayer.alive)) {
+	if (!Boolean(game.player.alive)) {
 		drawMenu();
 	}
 
